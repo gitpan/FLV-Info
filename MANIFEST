@@ -1,0 +1,22 @@
+index.html
+bin/flvinfo
+Build.PL
+ChangeLog
+lib/FLV/AMFReader.pm
+lib/FLV/AudioTag.pm
+lib/FLV/Base.pm
+lib/FLV/Body.pm
+lib/FLV/Constants.pm
+lib/FLV/File.pm
+lib/FLV/Header.pm
+lib/FLV/Info.pm
+lib/FLV/MetaTag.pm
+lib/FLV/Tag.pm
+lib/FLV/VideoTag.pm
+LICENSE
+MANIFEST			This list of files
+META.yml
+README
+t/flv.t
+t/pod-coverage.t
+t/pod.t

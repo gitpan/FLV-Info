@@ -1,0 +1,86 @@
+#!/usr/bin/perl -w
+
+package main;
+
+use warnings;
+use strict;
+use FLV::Info;
+use Getopt::Long;
+use Pod::Usage;
+use English qw(-no_match_vars);
+
+our $VERSION = '0.01';
+
+my %opts = (
+            verbose    => 0,
+            help       => 0,
+            version    => 0,
+            );
+
+Getopt::Long::Configure('bundling');
+GetOptions('v|verbose'    => \$opts{verbose},
+           'h|help'       => \$opts{help},
+           'V|version'    => \$opts{version},
+           ) or pod2usage(1);
+if ($opts{help})
+{
+   pod2usage(-exitstatus => 0, -verbose => 2);
+}
+if ($opts{version})
+{
+   print "FLV::Info v$FLV::Info::VERSION\n";
+   exit 0;
+}
+
+if (@ARGV < 1)
+{
+   pod2usage(1);
+}
+
+while (@ARGV > 0)
+{
+   my $filename = shift;
+
+   my $i = FLV::Info->new();
+   $i->parse($filename);
+   print $i->report();
+   if (@ARGV > 0)
+   {
+      print "---------------------------------\n";
+   }
+}
+
+
+__END__
+
+=for stopwords flv flvinfo file.flv
+
+=head1 NAME
+
+flvinfo - Print information about FLV file(s)
+
+=head1 SYNOPSIS
+
+flvinfo [options] file.flv [file.flv ...]
+
+ Options:
+   -v --verbose        print diagnostic messages
+   -h --help           verbose help message
+   -V --version        print FLV::Info version
+
+=head1 DESCRIPTION
+
+Prints to STDOUT various basic details about the specified FLV
+file(s).
+
+=head1 SEE ALSO
+
+FLV::Info
+
+=head1 AUTHOR
+
+Clotho Advanced Media Inc., I<cpan@clotho.com>
+
+Primary Developer: Chris Dolan
+
+=cut

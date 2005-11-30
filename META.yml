@@ -1,0 +1,47 @@
+---
+name: FLV-Info
+version: 0.01
+author:
+  - 'Clotho Advanced Media, Inc. <cpan@clotho.com>'
+abstract: Extract metadata from Flash Video files
+license: perl
+requires:
+  AMF::Perl: 0.15
+  List::Util: 0
+build_requires:
+  Test::More: 0
+provides:
+  FLV::AMFReader:
+    file: lib/FLV/AMFReader.pm
+    version: 0.01
+  FLV::AudioTag:
+    file: lib/FLV/AudioTag.pm
+    version: 0.01
+  FLV::Base:
+    file: lib/FLV/Base.pm
+    version: 0.01
+  FLV::Body:
+    file: lib/FLV/Body.pm
+    version: 0.01
+  FLV::Constants:
+    file: lib/FLV/Constants.pm
+    version: 0.01
+  FLV::File:
+    file: lib/FLV/File.pm
+    version: 0.01
+  FLV::Header:
+    file: lib/FLV/Header.pm
+    version: 0.01
+  FLV::Info:
+    file: lib/FLV/Info.pm
+    version: 0.01
+  FLV::MetaTag:
+    file: lib/FLV/MetaTag.pm
+    version: 0.01
+  FLV::Tag:
+    file: lib/FLV/Tag.pm
+    version: 0.01
+  FLV::VideoTag:
+    file: lib/FLV/VideoTag.pm
+    version: 0.01
+generated_by: Module::Build version 0.2611
