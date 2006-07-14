@@ -9,15 +9,15 @@ use base 'FLV::Base';
 use FLV::Header;
 use FLV::Body;
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 =head1 NAME
 
-FLV::Info - Extract metadata from Flash Video files
+FLV::File - Parse Flash Video files
 
 =head1 LICENSE
 
-Copyright 2005 Clotho Advanced Media, Inc., <cpan@clotho.com>
+Copyright 2006 Clotho Advanced Media, Inc., <cpan@clotho.com>
 
 This library is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.
@@ -60,7 +60,7 @@ sub parse
       {
          $self->{filename} = $input;
          open my $fh, '<', $self->{filename}
-            or croak $OS_ERROR;
+            or croak q{}.$OS_ERROR;
          binmode $fh;
          $self->{filehandle} = $fh;
       }
@@ -71,11 +71,36 @@ sub parse
    };
    if ($EVAL_ERROR)
    {
-      croak 'Failed to read FLV file: '.$EVAL_ERROR;
+      die 'Failed to read FLV file: '.$EVAL_ERROR;
    }
    $self->{filehandle} = undef; # implicitly close the filehandle
    $self->{pos} = 0;
    return;
+}
+
+=item $self->serialize($filehandle)
+
+Serializes the in-memory FLV data.  If that representation is not
+complete, this throws an exception via croak().  Returns a boolean
+indicating whether writing to the file handle was successful.
+
+=cut
+
+sub serialize
+{
+   my $self = shift;
+   my $filehandle = shift || croak 'Please specify a filehandle';
+
+   if (!$self->{header})
+   {
+      die 'Missing FLV header';
+   }
+   if (!$self->{body})
+   {
+      die 'Missing FLV body';
+   }
+   return $self->{header}->serialize($filehandle)
+       && $self->{body}->serialize($filehandle);
 }
 
 =item $self->get_info()
@@ -133,7 +158,7 @@ sub get_bytes
    my $bytes = read $fh, $buf, $n;
    if ($bytes != $n)
    {
-      croak 'Unexpected end of file';
+      die 'Unexpected end of file';
    }
    $self->{pos} += $bytes;
    return $buf;

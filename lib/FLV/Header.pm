@@ -6,7 +6,7 @@ use Carp;
 
 use base 'FLV::Base';
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 =for stopwords FLVTool2
 
@@ -16,7 +16,7 @@ FLV::Header - Flash video file data structure
 
 =head1 LICENSE
 
-Copyright 2005 Clotho Advanced Media, Inc., <cpan@clotho.com>
+Copyright 2006 Clotho Advanced Media, Inc., <cpan@clotho.com>
 
 This library is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.
@@ -44,31 +44,26 @@ sub parse
    my $file = shift;
 
    my $content = $file->get_bytes(9);
-   if (9 > length $content)
-   {
-      croak 'Missing file header';
-   }
-
    my ($signature, $version, $flags, $offset) = unpack 'A3CCN', $content;
 
    $self->debug("Signature: $signature, version: $version, ".
                 "flags: $flags, offset: $offset");
 
-   if (!$signature || $signature ne 'FLV')
+   if ($signature ne 'FLV')
    {
-      croak 'Not an FLV file at byte '.$file->get_pos(-9);
+      die 'Not an FLV file at byte '.$file->get_pos(-9);
    }
-   if (!$version || $version != 1)
+   if ($version != 1)
    {
       die 'Internal error: I only understand FLV version 1'
    }
    if (0 != ($flags & 0xfa))
    {
-      croak 'Reserved header flags are non-zero at byte '.$file->get_pos(-5);
+      die 'Reserved header flags are non-zero at byte '.$file->get_pos(-5);
    }
-   if ($offset != 9)
+   if ($offset < 9)
    {
-      croak 'Unexpected value for body offset at byte '.$file->get_pos(-4);
+      die 'Illegal value for body offset at byte '.$file->get_pos(-4);
    }
 
    $self->{has_audio} = $flags & 0x04 ? 1 : undef;
@@ -81,6 +76,25 @@ sub parse
    }
 
    return;
+}
+
+=item $self->serialize($filehandle)
+
+Serializes the in-memory FLV header.  If that representation is not
+complete, this throws an exception via croak().  Returns a boolean
+indicating whether writing to the file handle was successful.
+
+=cut
+
+sub serialize
+{
+   my $self = shift;
+   my $filehandle = shift || croak 'Please specify a filehandle';
+
+   my $flags = ($self->{has_audio} ? 0x04 : 0)
+             | ($self->{has_video} ? 0x01 : 0);
+   my $header = pack 'A3CCN', 'FLV', 1, $flags, 9;
+   return print {$filehandle} $header;
 }
 
 =item $self->has_video()

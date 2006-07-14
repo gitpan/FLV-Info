@@ -1,11 +1,11 @@
-package FLV::AMFReader;
+package FLV::AMFWriter;
 
 use warnings;
 use strict;
 
 use AMF::Perl::Util::Object;
-use AMF::Perl::IO::InputStream;
-use base 'AMF::Perl::IO::Deserializer';
+use AMF::Perl::IO::OutputStream;
+use base 'AMF::Perl::IO::Serializer';
 
 our $VERSION = '0.02';
 
@@ -49,47 +49,32 @@ Creates a minimal AMF::Perl::IO::Deserializer instance.
 
 sub new
 {
-   my $pkg     = shift;
-   my $content = shift;
+   my $pkg = shift;
 
-   return bless {
-      inputStream => AMF::Perl::IO::InputStream->new($content),
-   }, $pkg;
+   return $pkg->SUPER::new(AMF::Perl::IO::OutputStream->new());
 }
 
-=item $self->read_flv_meta()
+=item $self->write_flv_meta(@data)
 
-Returns an array of anonymous data structures.
-
-Parse AMF data from a block of FLV data.  This method of very lenient.
-If there are any parsing errors, that data is just ignored and any
-successfully parsed data is returned.
-
-We expect there to be exactly two return values, but this method is
-generic and is happy to return anywhere from zero to twenty data.
+Returns a byte string of serialized data
 
 =cut
 
-sub read_flv_meta
+sub write_flv_meta
 {
    my $self = shift;
+   my @data = @_;
 
-   my @data;
-   eval
+   for my $d (@data)
    {
-      for my $iter (1..20)
-      {
-         my $type = $self->{inputStream}->readByte();
-         #print "AMF type: $type\n";
-         push @data, $self->readData($type);
-      }
-   };
-   return @data;
+      $self->writeData($d);
+   }
+   return $self->{out}->flush();
 }
 
-=item $self->readMixedArray()
+=item $self->writeMixedArray()
 
-Returns a populated hashref.
+Serializes a hashref.
 
 This is a workaround for versions of AMF::Perl which did not handle
 hashes (namely v0.15 and earlier).  This method is only installed if a
@@ -97,41 +82,46 @@ method of the same name does not exist in the superclass.
 
 This should be removed when a newer release of AMF::Perl is available.
 
-=item $self->readData($type)
+=item $self->writeData($datum)
 
-This is a minimal override of readData() in the superclass to add
+This is a minimal override of writeData() in the superclass to add
 support for mixed arrays (aka hashes).
 
-As above, it is only installed if AMF::Perl::IO::Deserializer lacks a
-readMixedArray() method.
+As above, it is only installed if AMF::Perl::IO::Serializer lacks a
+writeMixedArray() method.
 
 =cut
 
-if (! __PACKAGE__->can('readMixedArray'))
+if (! __PACKAGE__->can('writeMixedArray'))
 {
-   *readMixedArray = sub
+   *writeMixedArray = sub
    {
-      my ($self)=@_;
-      
-      # This length is actually unused!  How odd...
-      # Instead, a value with datatype == 9 is the end flag
-      my $length = $self->{inputStream}->readLong();
-      
-      return $self->readObject();
+      my ($self, $d) = @_;
+
+      $self->{out}->writeByte(8); # type code
+      $self->{out}->writeLong(0); # length, bogus value...
+      $self->writeObject($d);
+      return;
    };
 
-   *readData = sub
+   *writeData = sub
    {
-      my ($self, $type) = @_;
+      my ($self, $d, $type) = @_;
       
-      if ($type == 8)
+      if (!$type && (ref $d) && (ref $d) =~ m/HASH/xms)
       {
-         return $self->readMixedArray();
+         $type = 'mixedarray';
+      }
+
+      if ($type && $type eq 'mixedarray')
+      {
+         $self->writeMixedArray($d);
       }
       else
       {
-         return $self->SUPER::readData($type);
+         $self->SUPER::writeData($d, $type);
       }
+      return;
    };
 }
 

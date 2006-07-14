@@ -12,4 +12,5 @@ Module::Build->new(
    },
    script_files => ['bin/flvinfo'],
    add_to_cleanup => [ 'FLV-Info-*' ],
+   create_makefile_pl => 'traditional',
 )->create_build_script;

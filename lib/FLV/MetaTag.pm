@@ -6,18 +6,13 @@ use Carp;
 use English qw(-no_match_vars);
 use Readonly;
 
-# Temporarily use a patched version that supports hashes
-#use lib qw(../AMFPerl/AMF-Perl-0.15/lib);
-#use AMF::Perl::Util::Object;
-#use AMF::Perl::IO::InputStream;
-#use AMF::Perl::IO::Deserializer;
-
 use base 'FLV::Base';
 
 use FLV::AMFReader;
+use FLV::AMFWriter;
 use FLV::Constants;
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 =for stopwords FLVTool2 AMF
 
@@ -27,7 +22,7 @@ FLV::MetaTag - Flash video file data structure
 
 =head1 LICENSE
 
-Copyright 2005 Clotho Advanced Media, Inc., <cpan@clotho.com>
+Copyright 2006 Clotho Advanced Media, Inc., <cpan@clotho.com>
 
 This library is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.
@@ -67,6 +62,8 @@ sub parse
 
    my $content = $file->get_bytes($datasize);
 
+   #print STDERR "\n", map({sprintf '%02x', $_} unpack 'C*', $content), "\n";
+
    my @data = FLV::AMFReader->new($content)->read_flv_meta();
 
    #use File::Slurp;
@@ -77,6 +74,22 @@ sub parse
    $self->{data} = \@data;
 
    return;
+}
+
+=item $self->serialize()
+
+Returns a byte string representation of the tag data.  Throws an
+exception via croak() on error.
+
+=cut
+
+sub serialize
+{
+   my $self = shift;
+
+   my $content = FLV::AMFWriter->new()->write_flv_meta(@{$self->{data}});
+   #print STDERR "\n", map({sprintf '%02x', $_} unpack 'C*', $content), "\n";
+   return $content;
 }
 
 =item $self->get_info()
@@ -94,7 +107,7 @@ sub get_info
       my $data = $_[0]->{data}->[1];
       if ($data)
       {
-         for my $key (keys %$data)
+         for my $key (keys %{$data})
          {
             my $value = $data->{$key};
             if (!defined $value)

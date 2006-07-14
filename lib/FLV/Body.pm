@@ -8,8 +8,11 @@ use English qw(-no_match_vars);
 use base 'FLV::Base';
 
 use FLV::Tag;
+use FLV::VideoTag;
+use FLV::AudioTag;
+use FLV::MetaTag;
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 =head1 NAME
 
@@ -17,7 +20,7 @@ FLV::Body - Flash video file data structure
 
 =head1 LICENSE
 
-Copyright 2005 Clotho Advanced Media, Inc., <cpan@clotho.com>
+Copyright 2006 Clotho Advanced Media, Inc., <cpan@clotho.com>
 
 This library is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.
@@ -62,6 +65,33 @@ sub parse
 
    $self->{tags} = [sort {$a->{start} <=> $b->{start}} @tags];
    return;
+}
+
+=item $self->serialize($filehandle)
+
+Serializes the in-memory FLV body.  If that representation is not
+complete, this throws an exception via croak().  Returns a boolean
+indicating whether writing to the file handle was successful.
+
+=cut
+
+sub serialize
+{
+   my $self = shift;
+   my $filehandle = shift || croak 'Please specify a filehandle';
+
+   return if (! print {$filehandle} pack 'V', 0);
+
+   for my $tag (@{$self->{tags}})
+   {
+      my $size = FLV::Tag->serialize($tag, $filehandle);
+      if (!$size)
+      {
+         return;
+      }
+      print {$filehandle} pack 'V', $size;
+   }
+   return 1;
 }
 
 =item $self->get_info()
@@ -152,34 +182,34 @@ sub last_start_time
    return $tag->{start};
 }
 
-=item $self->end_time()
-
-Doesn't work yet.
-
-This is a prototypic implementation that tries to extrapolate the end time of the FLV from metadata about the last tags.
-
-=cut
-
-sub end_time
-{
-   my $self = shift;
-
-   my $tag = $self->{tags}->[-1]
-       or die 'No tags found';
-
-   my $duration;
-   if ($tag->isa('FLV::VideoTag'))
-   {
-      my $f = $self->video_frames();
-      $duration = $tag->{start}/($f-1);
-   }
-   else
-   {
-      # Doesn't work yet
-      $duration = $tag->get_duration();
-   }
-   return $tag->{start} + $duration;
-}
+# =item $self->end_time()
+#
+# Doesn't work yet.
+#
+# This is a prototypic implementation that tries to extrapolate the end time of the FLV from metadata about the last tags.
+#
+# =cut
+#
+# sub end_time
+# {
+#    my $self = shift;
+#
+#    my $tag = $self->{tags}->[-1]
+#        or die 'No tags found';
+#
+#    my $duration;
+#    if ($tag->isa('FLV::VideoTag'))
+#    {
+#       my $f = $self->video_frames();
+#       $duration = $tag->{start}/($f-1);
+#    }
+#    else
+#    {
+#       # Doesn't work yet
+#       $duration = $tag->get_duration();
+#    }
+#    return $tag->{start} + $duration;
+# }
 
 1;
 

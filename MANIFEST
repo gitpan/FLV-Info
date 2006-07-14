@@ -1,8 +1,9 @@
 index.html
 bin/flvinfo
 Build.PL
-ChangeLog
+CHANGES
 lib/FLV/AMFReader.pm
+lib/FLV/AMFWriter.pm
 lib/FLV/AudioTag.pm
 lib/FLV/Base.pm
 lib/FLV/Body.pm
@@ -14,9 +15,12 @@ lib/FLV/MetaTag.pm
 lib/FLV/Tag.pm
 lib/FLV/VideoTag.pm
 LICENSE
+Makefile.PL
 MANIFEST			This list of files
 META.yml
 README
 t/flv.t
 t/pod-coverage.t
 t/pod.t
+t/samples/flash6.flv
+t/samples/flash8.flv

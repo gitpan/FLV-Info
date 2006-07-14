@@ -12,7 +12,7 @@ use FLV::AudioTag;
 use FLV::VideoTag;
 use FLV::MetaTag;
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 =for stopwords subtag
 
@@ -22,7 +22,7 @@ FLV::Tag - Flash video file data structure
 
 =head1 LICENSE
 
-Copyright 2005 Clotho Advanced Media, Inc., <cpan@clotho.com>
+Copyright 2006 Clotho Advanced Media, Inc., <cpan@clotho.com>
 
 This library is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.
@@ -56,7 +56,7 @@ sub parse
 
    my ($type, $datasize1, $datasize2, $datasize3,
        $timestamp1, $timestamp2, $timestamp3, $reserved)
-       = unpack 'CCCCCCCN', $content;
+       = unpack 'CCCCCCCV', $content;
 
    $self->debug("tag type: $type, size: $datasize1+$datasize2+$datasize3, " .
                 "time: $timestamp1/$timestamp2/$timestamp3, reserved: $reserved");
@@ -66,15 +66,15 @@ sub parse
 
    if ($datasize < 11)
    {
-      croak 'Tag size is too small at byte '.$file->get_pos(-10);
+      die 'Tag size is too small at byte '.$file->get_pos(-10);
    }
    if ($reserved)
    {
-      croak 'Reserved fields are non-zero at byte '.$file->get_pos(-4);
+      die 'Reserved fields are non-zero at byte '.$file->get_pos(-4);
    }
 
    my $payload_class = $TAG_CLASSES{$type} 
-      or croak 'Unknown tag type '.$type.' at byte '.$file->get_pos(-11);
+      or die 'Unknown tag type '.$type.' at byte '.$file->get_pos(-11);
 
    $self->{payload} = $payload_class->new();
    $self->{payload}->{start} = $timestamp;
@@ -94,6 +94,37 @@ sub get_payload
 {
    my $self = shift;
    return $self->{payload};
+}
+
+=item $pkg->serialize($tag, $filehandle)
+
+=item $self->serialize($tag, $filehandle)
+
+Serializes the specified video, audio or meta tag.  If that
+representation is not complete, this throws an exception via croak().
+Returns a boolean indicating whether writing to the file handle was
+successful.
+
+=cut
+
+sub serialize
+{
+   my $pkg_or_self = shift;
+   my $tag = shift || croak 'Please specify a tag';
+   my $filehandle = shift || croak 'Please specify a filehandle';
+
+   my $tag_type = {reverse %TAG_CLASSES}->{ref $tag} || die 'Unknown tag class ' . ref $tag;
+
+   my @timestamp = ($tag->{start} >> 16 & 0xff, $tag->{start} >> 8 & 0xff, $tag->{start} & 0xff);
+   my $data = $tag->serialize();
+   my $datasize = length $data;
+   my @datasize = ($datasize >> 16 & 0xff, $datasize >> 8 & 0xff, $datasize & 0xff);
+   #print STDERR "datasize: $datasize, @datasize\n";
+
+   my $header = pack 'CCCCCCCV', $tag_type, @datasize, @timestamp, 0;
+   return if (! print {$filehandle} $header);
+   return if (!print {$filehandle} $data);
+   return 11 + $datasize;
 }
 
 1;

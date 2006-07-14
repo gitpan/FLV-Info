@@ -1,0 +1,11 @@
+Revision history for Perl module FLV::Info
+
+0.02  13 Jul 2006
+      [ENHANCEMENTS]
+      - Add support for writing FLV data
+      [STANDARDS]
+      - Comply with Perl::Critic v0.18
+      - Test coverage is over 90% (Devel::Cover)
+
+0.01  30 Nov 2005
+      Initial release

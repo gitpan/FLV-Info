@@ -3,7 +3,7 @@ package FLV::Base;
 use warnings;
 use strict;
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 my $verbose = 0;
 
@@ -13,7 +13,7 @@ FLV::Base - Utility methods for other FLV::* classes
 
 =head1 LICENSE
 
-Copyright 2005 Clotho Advanced Media, Inc., <cpan@clotho.com>
+Copyright 2006 Clotho Advanced Media, Inc., <cpan@clotho.com>
 
 This library is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.
@@ -58,17 +58,17 @@ Print the message to STDERR if the verbose flag is set to true.
 
 sub debug
 {
+   return if (!$verbose);
+
    my $pkg_or_self = shift;
    my $msg  = shift;
-
-   return if (!$verbose);
 
    if ($msg !~ m/\n \z/xms)
    {
       $msg .= "\n";
    }
 
-   print STDERR $msg;
+   print {*STDERR} $msg;
    return;
 }
 
@@ -91,12 +91,12 @@ sub _get_info
    my $tags   = shift; # arrayref
 
    my %info = (
-      count => scalar @$tags,
+      count => scalar @{$tags},
    );
-   my %types = map {$_ => {}} keys %$fields;
-   for my $tag (@$tags)
+   my %types = map {$_ => {}} keys %{$fields};
+   for my $tag (@{$tags})
    {
-      for my $field (keys %$fields)
+      for my $field (keys %{$fields})
       {
          if (defined $tag->{$field})
          {
@@ -104,10 +104,10 @@ sub _get_info
          }
       }
    }
-   for my $field (keys %$fields)
+   for my $field (keys %{$fields})
    {
       my $counts = $types{$field};
-      my @list = sort {$counts->{$b} <=> $counts->{$a} || $b cmp $a} keys %$counts;
+      my @list = reverse sort {$counts->{$a} <=> $counts->{$b} || $a cmp $b} keys %{$counts};
       my $lookup = $fields->{$field};
       if ($lookup)
       {

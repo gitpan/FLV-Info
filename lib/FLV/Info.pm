@@ -6,7 +6,7 @@ use List::Util qw(max);
 
 use FLV::File;
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 =for stopwords FLVTool2 interframes keyframes
 
@@ -40,7 +40,7 @@ L<http://www.macromedia.com/licensing/developer/>
 
 =head1 LICENSE
 
-Copyright 2005 Clotho Advanced Media, Inc., <cpan@clotho.com>
+Copyright 2006 Clotho Advanced Media, Inc., <cpan@clotho.com>
 
 This library is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

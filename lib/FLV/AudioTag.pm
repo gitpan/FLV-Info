@@ -10,7 +10,7 @@ use base 'FLV::Base';
 
 use FLV::Constants;
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 =head1 NAME
 
@@ -18,7 +18,7 @@ FLV::AudioTag - Flash video file data structure
 
 =head1 LICENSE
 
-Copyright 2005 Clotho Advanced Media, Inc., <cpan@clotho.com>
+Copyright 2006 Clotho Advanced Media, Inc., <cpan@clotho.com>
 
 This library is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.
@@ -49,14 +49,14 @@ sub parse
 
    my $flags = unpack 'C', $file->get_bytes(1);
 
-   my $format = q{}.(($flags >> 4) & 0x0f);
-   my $rate   = q{}.(($flags >> 2) & 0x02);
-   my $size   = q{}.(($flags >> 1) & 0x01);
-   my $type   = q{}.( $flags       & 0x01);
+   my $format = (($flags >> 4) & 0x0f);
+   my $rate   = (($flags >> 2) & 0x02);
+   my $size   = (($flags >> 1) & 0x01);
+   my $type   = ( $flags       & 0x01);
 
    if (!exists $AUDIO_FORMATS{$format})
    {
-      croak 'Unknown audio format '.$format.' at byte '.$file->get_pos(-1);
+      die 'Unknown audio format '.$format.' at byte '.$file->get_pos(-1);
    }
 
    $self->{format} = $format;
@@ -67,6 +67,25 @@ sub parse
    $self->{data} = $file->get_bytes($datasize-1);
 
    return;
+}
+
+=item $self->serialize()
+
+Returns a byte string representation of the tag data.  Throws an
+exception via croak() on error.
+
+=cut
+
+sub serialize
+{
+   my $self = shift;
+
+   my $flags = pack 'C', 
+         ($self->{format} << 4)
+       | ($self->{rate}   << 2)
+       | ($self->{size}   << 1)
+       |  $self->{type};
+   return $flags . $self->{data};
 }
 
 =item $self->get_info()

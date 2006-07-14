@@ -4,9 +4,10 @@ use warnings;
 use strict;
 use base 'Exporter';
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
-our @EXPORT = qw(
+our @EXPORT = ## no critic(Modules::ProhibitAutomaticExportation)
+    qw(
    %TAG_CLASSES
    %AUDIO_FORMATS
    %AUDIO_RATES
@@ -65,7 +66,7 @@ FLV::Constants - Flash video data
 
 =head1 LICENSE
 
-Copyright 2005 Clotho Advanced Media, Inc., <cpan@clotho.com>
+Copyright 2006 Clotho Advanced Media, Inc., <cpan@clotho.com>
 
 This library is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

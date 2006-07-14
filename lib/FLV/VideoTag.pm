@@ -10,7 +10,7 @@ use base 'FLV::Base';
 
 use FLV::Constants;
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 =for stopwords codec
 
@@ -20,7 +20,7 @@ FLV::VideoTag - Flash video file data structure
 
 =head1 LICENSE
 
-Copyright 2005 Clotho Advanced Media, Inc., <cpan@clotho.com>
+Copyright 2006 Clotho Advanced Media, Inc., <cpan@clotho.com>
 
 This library is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.
@@ -57,11 +57,11 @@ sub parse
 
    if (!exists $VIDEO_CODEC_IDS{$codec})
    {
-      croak 'Unknown video codec '.$codec.' at byte '.$file->get_pos(-1);
+      die 'Unknown video codec '.$codec.' at byte '.$file->get_pos(-1);
    }
    if (!exists $VIDEO_FRAME_TYPES{$type})
    {
-      croak 'Unknown video frame type at byte '.$file->get_pos(-1);
+      die 'Unknown video frame type at byte '.$file->get_pos(-1);
    }
 
    $self->{codec} = $codec;
@@ -95,10 +95,12 @@ sub _parse_h263
    # Surely there's a better way than this....
    my $bits = unpack 'B65', $self->{data};
    my $sizecode = substr $bits, 30, 3;
-   my @d = ((ord pack 'B8', substr $bits, 33, 8),
-            (ord pack 'B8', substr $bits, 41, 8),
-            (ord pack 'B8', substr $bits, 49, 8),
-            (ord pack 'B8', substr $bits, 57, 8));
+   my @d = (
+      (ord pack 'B8', substr $bits, 33, 8),
+      (ord pack 'B8', substr $bits, 41, 8),
+      (ord pack 'B8', substr $bits, 49, 8),
+      (ord pack 'B8', substr $bits, 57, 8),
+   );
    my ($width, $height, $offset) =
        $sizecode == '000' ? ($d[0], $d[1], 16)
      : $sizecode == '001' ? ($d[0]*256+$d[1], $d[2]*256+$d[3], 32)
@@ -107,7 +109,7 @@ sub _parse_h263
      : $sizecode == '100' ? (128,  96, 0)
      : $sizecode == '101' ? (320, 240, 0)
      : $sizecode == '110' ? (160, 120, 0)
-     : croak 'Illegal value for H.263 size code at byte '.$pos;
+     : die 'Illegal value for H.263 size code at byte '.$pos;
 
    $self->{width}  = $width;
    $self->{height} = $height;
@@ -140,6 +142,21 @@ sub _parse_on2vp6
    return;
 }
 
+=item $self->serialize()
+
+Returns a byte string representation of the tag data.  Throws an
+exception via croak() on error.
+
+=cut
+
+sub serialize
+{
+   my $self = shift;
+
+   my $flags = pack 'C', ($self->{type} << 4) | $self->{codec};
+   return $flags . $self->{data};
+}
+
 =item $self->get_info()
 
 Returns a hash of FLV metadata.  See File::Info for more details.
@@ -150,10 +167,12 @@ sub get_info
 {
    my $pkg = shift;
 
-   return $pkg->_get_info('video', {type   => \%VIDEO_FRAME_TYPES,
-                                    codec  => \%VIDEO_CODEC_IDS,
-                                    width  => undef,
-                                    height => undef}, \@_);
+   return $pkg->_get_info('video', {
+      type   => \%VIDEO_FRAME_TYPES,
+      codec  => \%VIDEO_CODEC_IDS,
+      width  => undef,
+      height => undef,
+   }, \@_);
 }
 
 1;
