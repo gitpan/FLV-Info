@@ -1,5 +1,13 @@
 Revision history for Perl module FLV::Info
 
+0.03  14 Jul 2006
+      [ENHANCEMENTS]
+      - Add swf2flv transcoder
+      - Verbose mode for flvinfo program lists tags
+      [PREREQS]
+      - Added Digest::MD5
+      - Added SWF::File
+
 0.02  13 Jul 2006
       [ENHANCEMENTS]
       - Add support for writing FLV data

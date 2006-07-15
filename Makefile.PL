@@ -6,13 +6,16 @@ WriteMakefile
           'INSTALLDIRS' => 'site',
           'NAME' => 'FLV::Info',
           'EXE_FILES' => [
-                           'bin/flvinfo'
+                           'bin/flvinfo',
+                           'bin/swf2flv'
                          ],
           'VERSION_FROM' => 'lib/FLV/Info.pm',
           'PREREQ_PM' => {
                            'Test::More' => 0,
                            'List::Util' => 0,
-                           'AMF::Perl' => '0.15'
+                           'AMF::Perl' => '0.15',
+                           'Digest::MD5' => 0,
+                           'SWF::File' => 0
                          }
         )
 ;

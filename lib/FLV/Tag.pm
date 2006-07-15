@@ -12,7 +12,7 @@ use FLV::AudioTag;
 use FLV::VideoTag;
 use FLV::MetaTag;
 
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 
 =for stopwords subtag
 
@@ -114,7 +114,8 @@ sub serialize
    my $filehandle = shift || croak 'Please specify a filehandle';
 
    my $tag_type = {reverse %TAG_CLASSES}->{ref $tag} || die 'Unknown tag class ' . ref $tag;
-
+   
+   #print STDERR "start $tag->{start} @{[ref $tag]}\n";
    my @timestamp = ($tag->{start} >> 16 & 0xff, $tag->{start} >> 8 & 0xff, $tag->{start} & 0xff);
    my $data = $tag->serialize();
    my $datasize = length $data;

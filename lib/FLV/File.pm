@@ -8,8 +8,9 @@ use English qw(-no_match_vars);
 use base 'FLV::Base';
 use FLV::Header;
 use FLV::Body;
+use FLV::MetaTag;
 
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 
 =head1 NAME
 
@@ -27,6 +28,23 @@ under the same terms as Perl itself.
 This is a subclass of FLV::Base.
 
 =over
+
+=item $self->empty()
+
+Prepare an empty FLV.  This is only needed if you do not plan to call
+the parse() method.
+
+=cut
+
+sub empty
+{
+   my $self = shift;
+
+   $self->{header} = FLV::Header->new();
+   $self->{body} = FLV::Body->new();
+   $self->{body}->{tags} = [];
+   return;
+}
 
 =item $self->parse($filename)
 
@@ -203,6 +221,39 @@ sub at_end
       die 'Internal error: attempt to read a closed filehandle';
    }
    return eof $fh;
+}
+
+=item $self->get_meta($key);
+
+=item $self->set_meta($key, $value);
+
+These are convenience functions for interacting with an C<onMetadata>
+tag at time 0, which is a common convention in FLV files.  If the 0th
+tag is not an L<FLV::MetaTag> instance, one is created and prepended
+to the tag list.
+
+See also C<get_meta> and C<set_meta> in L<FLV::Body>.
+
+=cut
+
+sub get_meta
+{
+   my $self = shift;
+   my $key = shift;
+
+   return if (!$self->{body});
+   return $self->{body}->get_meta($key);
+}
+
+sub set_meta
+{
+   my $self = shift;
+   my $key = shift;
+   my $value = shift;
+
+   $self->{body} ||= FLV::Body->new();
+   $self->{body}->set_meta($key, $value);
+   return;
 }
 
 1;

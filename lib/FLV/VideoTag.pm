@@ -10,7 +10,7 @@ use base 'FLV::Base';
 
 use FLV::Constants;
 
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 
 =for stopwords codec
 
@@ -93,7 +93,7 @@ sub _parse_h263
    my $pos = shift;
 
    # Surely there's a better way than this....
-   my $bits = unpack 'B65', $self->{data};
+   my $bits = unpack 'B67', $self->{data};
    my $sizecode = substr $bits, 30, 3;
    my @d = (
       (ord pack 'B8', substr $bits, 33, 8),
@@ -114,6 +114,16 @@ sub _parse_h263
    $self->{width}  = $width;
    $self->{height} = $height;
 
+   my $type = 1 + (substr $bits, 33+$offset, 1)*2 + substr $bits, 33+$offset+1, 1;
+   if (!defined $self->{type})
+   {
+      $self->{type} = $type;
+   }
+   elsif ($type != $self->{type})
+   {
+      die "Type mismatch: header says $VIDEO_FRAME_TYPES{$self->{type}}, data says $VIDEO_FRAME_TYPES{$type}";
+   }
+
    return;
 }
 
@@ -130,7 +140,9 @@ sub _parse_screen_video
 
    $self->{width}  = $width;
    $self->{height} = $height;
-           
+
+   $self->{type} ||= 1;
+
    return;
 }
 

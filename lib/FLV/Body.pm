@@ -12,7 +12,7 @@ use FLV::VideoTag;
 use FLV::AudioTag;
 use FLV::MetaTag;
 
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 
 =head1 NAME
 
@@ -210,6 +210,49 @@ sub last_start_time
 #    }
 #    return $tag->{start} + $duration;
 # }
+
+=item $self->get_meta($key);
+
+=item $self->set_meta($key, $value);
+
+These are convenience functions for interacting with an C<onMetadata>
+tag at time 0, which is a common convention in FLV files.  If the 0th
+tag is not an L<FLV::MetaTag> instance, one is created and prepended
+to the tag list.
+
+See also C<get_value> and C<set_value> in L<FLV::MetaTag>.
+
+=cut
+
+sub get_meta
+{
+   my $self = shift;
+   my $key = shift;
+
+   return if (!$self->{tags});
+   my $meta = $self->{tags}->[0];
+   return if (!eval {$meta->isa('FLV::MetaTag')});
+   return $meta->get_value($key);
+}
+
+sub set_meta
+{
+   my $self = shift;
+   my $key = shift;
+   my $value = shift;
+
+   my $meta;
+   $self->{tags} ||= [];
+   $meta = $self->{tags}->[0];
+   if (!eval {$meta->isa('FLV::MetaTag')})
+   {
+      $meta = FLV::MetaTag->new();
+      $meta->{start} = 0;
+      unshift @{$self->{tags}}, $meta;
+   }
+   $meta->set_value($key => $value);
+   return;
+}
 
 1;
 

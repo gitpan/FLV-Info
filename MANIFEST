@@ -1,5 +1,6 @@
 index.html
 bin/flvinfo
+bin/swf2flv
 Build.PL
 CHANGES
 lib/FLV/AMFReader.pm
@@ -9,6 +10,7 @@ lib/FLV/Base.pm
 lib/FLV/Body.pm
 lib/FLV/Constants.pm
 lib/FLV/File.pm
+lib/FLV/FromSWF.pm
 lib/FLV/Header.pm
 lib/FLV/Info.pm
 lib/FLV/MetaTag.pm
@@ -23,4 +25,6 @@ t/flv.t
 t/pod-coverage.t
 t/pod.t
 t/samples/flash6.flv
+t/samples/flash6.swf
 t/samples/flash8.flv
+t/swf.t

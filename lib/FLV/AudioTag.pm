@@ -10,7 +10,7 @@ use base 'FLV::Base';
 
 use FLV::Constants;
 
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 
 =head1 NAME
 
@@ -50,7 +50,7 @@ sub parse
    my $flags = unpack 'C', $file->get_bytes(1);
 
    my $format = (($flags >> 4) & 0x0f);
-   my $rate   = (($flags >> 2) & 0x02);
+   my $rate   = (($flags >> 2) & 0x03);
    my $size   = (($flags >> 1) & 0x01);
    my $type   = ( $flags       & 0x01);
 

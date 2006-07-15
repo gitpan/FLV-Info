@@ -12,7 +12,7 @@ use FLV::AMFReader;
 use FLV::AMFWriter;
 use FLV::Constants;
 
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 
 =for stopwords FLVTool2 AMF
 
@@ -121,6 +121,40 @@ sub get_info
       }
    }
    return %info;
+}
+
+=item $self->get_value($key);
+
+=item $self->set_value($key, $value);
+
+These are convenience functions for interacting with an C<onMetadata>
+hash.
+
+=cut
+
+sub get_value
+{
+   my $self = shift;
+   my $key = shift;
+
+   return if (!$self->{data});
+   return if (@{$self->{data}} != 2);
+   return $self->{data}->[1]->{$key};
+}
+
+sub set_value
+{
+   my $self = shift;
+   my $key = shift;
+   my $value = shift;
+
+   $self->{data} ||= ['onMetaData', {}];
+   if (@{$self->{data}} != 2)
+   {
+      die 'Cannot set metadata';
+   }
+   $self->{data}->[1]->{$key} = $value;
+   return;
 }
 
 1;
