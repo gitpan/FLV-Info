@@ -12,7 +12,7 @@ use FLV::AudioTag;
 use FLV::VideoTag;
 use FLV::MetaTag;
 
-our $VERSION = '0.03';
+our $VERSION = '0.10';
 
 =for stopwords subtag
 
@@ -54,15 +54,17 @@ sub parse
 
    my $content = $file->get_bytes(11);
 
-   my ($type, $datasize1, $datasize2, $datasize3,
-       $timestamp1, $timestamp2, $timestamp3, $reserved)
+   
+   my ($type, @datasize, @timestamp, $reserved);
+   ($type, $datasize[0], $datasize[1], $datasize[2],
+    $timestamp[0], $timestamp[1], $timestamp[2], $reserved)
        = unpack 'CCCCCCCV', $content;
 
-   $self->debug("tag type: $type, size: $datasize1+$datasize2+$datasize3, " .
-                "time: $timestamp1/$timestamp2/$timestamp3, reserved: $reserved");
+   $self->debug("tag type: $type, size: $datasize[0]+$datasize[1]+$datasize[2], " .
+                "time: $timestamp[0]/$timestamp[1]/$timestamp[2]");
 
-   my $datasize  = ($datasize1  * 256 + $datasize2)  * 256 + $datasize3;
-   my $timestamp = ($timestamp1 * 256 + $timestamp2) * 256 + $timestamp3;
+   my $datasize  = ($datasize[0]  * 256 + $datasize[1])  * 256 + $datasize[2];
+   my $timestamp = ($timestamp[0] * 256 + $timestamp[1]) * 256 + $timestamp[2];
 
    if ($datasize < 11)
    {
@@ -77,7 +79,7 @@ sub parse
       or die 'Unknown tag type '.$type.' at byte '.$file->get_pos(-11);
 
    $self->{payload} = $payload_class->new();
-   $self->{payload}->{start} = $timestamp;
+   $self->{payload}->{start} = $timestamp; # millisec
    $self->{payload}->parse($file, $datasize); # might throw exception
 
    return;

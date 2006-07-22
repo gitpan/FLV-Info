@@ -113,7 +113,7 @@ my @cleanup;
    eval { $reader->parse($tempfilename); };
    like($@, qr/Unexpected end of file/, 'parse long flv header');
 
-   eval { $reader->{file}->serialize(); };
+   eval { $reader->get_file()->serialize(); };
    like($@, qr/Please specify a filehandle/, 'serialize with no filehandle');
 
    # Expect a failure with a warning
@@ -129,22 +129,24 @@ for my $sample (@samples)
    $reader->parse($sample->{file});
    ok(scalar $reader->get_info(), 'get_info');
    ok($reader->report(), 'report');
-   is($reader->{file}->get_filename(), $sample->{file}, 'get_filename');
+
+   my $flv = $reader->get_file();
+   is($flv->get_filename(), $sample->{file}, 'get_filename');
 
    my %info = (
       $reader->get_info(),
-      'tags'       => scalar $reader->{file}->{body}->get_tags(),
-      'has_video'  => $reader->{file}->{header}->has_video(),
-      'has_audio'  => $reader->{file}->{header}->has_audio(),
-      'video_tags' => $reader->{file}->{body}->count_video_frames(),
-      'audio_tags' => $reader->{file}->{body}->count_audio_packets(),
-      'meta_tags'  => $reader->{file}->{body}->count_meta_tags(),
-      #'end_time'   => $reader->{file}->{body}->end_time(),
+      'has_video'  => $flv->get_header()->has_video(),
+      'has_audio'  => $flv->get_header()->has_audio(),
+      'tags'       => scalar $flv->get_body()->get_tags(),
+      'video_tags' => scalar $flv->get_body()->get_video_frames(),
+      'audio_tags' => scalar $flv->get_body()->get_audio_packets(),
+      'meta_tags'  => scalar $flv->get_body()->get_meta_tags(),
+      #'end_time'   => $flv->get_body()->end_time(),
    );
 
    #use Data::Dumper;
    #diag Dumper \%info;
-   #diag Dumper [grep {$_->isa('FLV::MetaTag')} @{$reader->{file}->{body}->{tags}}];
+   #diag Dumper [$flv->get_body()->get_meta_tags()];
    for my $key (sort keys %{$sample->{expect}})
    {
       is($info{$key}, $sample->{expect}->{$key}, $sample->{file}.' - '.$key);
@@ -153,22 +155,24 @@ for my $sample (@samples)
    # Write the FLV back out as a temp file
    my ($fh, $tempfilename) = tempfile();
    push @cleanup, $tempfilename;
-   ok($reader->{file}->serialize($fh), 'serialize');
+   ok($flv->serialize($fh), 'serialize');
    close $fh;
    
    # Read the temp file back and compare it to the original -- should
    # be identical except for hash key ordering
    my $rereader = FLV::Info->new();
    $rereader->parse($tempfilename);
+   my $newflv = $rereader->get_file();
+
    # remove filename properties which are guaranteed to differ
-   $reader->{file}->{filename} = undef;
-   $rereader->{file}->{filename} = undef;
-   is_deeply($rereader->{file}, $reader->{file}, 'compare re-serialized');
+   $flv->{filename} = undef;
+   $newflv->{filename} = undef;
+   is_deeply($newflv, $flv, 'compare re-serialized');
    # read it again, this time via filehandle
    open my $fh2, '<', $tempfilename or die;
    $rereader->parse($fh2);
    close $fh2;
-   is_deeply($rereader->{file}, $reader->{file}, 'compare re-serialized');
+   is_deeply($newflv, $flv, 'compare re-serialized');
 }
 
 END

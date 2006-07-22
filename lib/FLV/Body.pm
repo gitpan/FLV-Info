@@ -12,7 +12,7 @@ use FLV::VideoTag;
 use FLV::AudioTag;
 use FLV::MetaTag;
 
-our $VERSION = '0.03';
+our $VERSION = '0.10';
 
 =head1 NAME
 
@@ -63,7 +63,12 @@ sub parse
       push @tags, $tag->get_payload();
    }
 
-   $self->{tags} = [sort {$a->{start} <=> $b->{start}} @tags];
+   my %tagorder = (
+      'FLV::MetaTag' => 1,
+      'FLV::AudioTag' => 2,
+      'FLV::VideoTag' => 3,
+   );
+   $self->{tags} = [sort {$a->{start} <=> $b->{start} || ($tagorder{ref $a}||0) <=> ($tagorder{ref $b}||0)} @tags];
    return;
 }
 
@@ -128,43 +133,43 @@ sub get_tags
    return @{$self->{tags}};
 }
 
-=item $self->count_video_frames()
+=item $self->get_video_frames()
 
-Returns the number of video tags in the FLV stream.
+Returns the video tags (FLV::VideoTag instances) in the FLV stream.
 
 =cut
 
-sub count_video_frames
+sub get_video_frames
 {
    my $self = shift;
 
-   return scalar grep {$_->isa('FLV::VideoTag')} @{$self->{tags}};
+   return grep {$_->isa('FLV::VideoTag')} @{$self->{tags}};
 }
 
-=item $self->count_audio_packets()
+=item $self->get_audio_packets()
 
-Returns the number of audio tags in the FLV stream.
+Returns the audio tags (FLV::AudioTag instances) in the FLV stream.
 
 =cut
 
-sub count_audio_packets
+sub get_audio_packets
 {
    my $self = shift;
 
-   return scalar grep {$_->isa('FLV::AudioTag')} @{$self->{tags}};
+   return grep {$_->isa('FLV::AudioTag')} @{$self->{tags}};
 }
 
-=item $self->count_meta_tags()
+=item $self->get_meta_tags()
 
-Returns the number of meta tags in the FLV stream.
+Returns the meta tags (FLV::MetaTag instances) in the FLV stream.
 
 =cut
 
-sub count_meta_tags
+sub get_meta_tags
 {
    my $self = shift;
 
-   return scalar grep {$_->isa('FLV::MetaTag')} @{$self->{tags}};
+   return grep {$_->isa('FLV::MetaTag')} @{$self->{tags}};
 }
 
 =item $self->last_start_time()
@@ -181,35 +186,6 @@ sub last_start_time
        or die 'No tags found';
    return $tag->{start};
 }
-
-# =item $self->end_time()
-#
-# Doesn't work yet.
-#
-# This is a prototypic implementation that tries to extrapolate the end time of the FLV from metadata about the last tags.
-#
-# =cut
-#
-# sub end_time
-# {
-#    my $self = shift;
-#
-#    my $tag = $self->{tags}->[-1]
-#        or die 'No tags found';
-#
-#    my $duration;
-#    if ($tag->isa('FLV::VideoTag'))
-#    {
-#       my $f = $self->video_frames();
-#       $duration = $tag->{start}/($f-1);
-#    }
-#    else
-#    {
-#       # Doesn't work yet
-#       $duration = $tag->get_duration();
-#    }
-#    return $tag->{start} + $duration;
-# }
 
 =item $self->get_meta($key);
 

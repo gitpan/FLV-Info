@@ -1,6 +1,6 @@
 ---
 name: FLV-Info
-version: 0.03
+version: 0.10
 author:
   - 'Clotho Advanced Media, Inc. <cpan@clotho.com>'
 abstract: Extract metadata from Flash Video files
@@ -9,51 +9,57 @@ resources:
   license: perl://dev.perl.org/licenses/
 requires:
   AMF::Perl: 0.15
-  Digest::MD5: 0
-  List::Util: 0
-  SWF::File: 0
+  Digest::MD5: 2
+  List::Util: 1
+  SWF::File: 0.033
 build_requires:
   Test::More: 0
 provides:
   FLV::AMFReader:
     file: lib/FLV/AMFReader.pm
-    version: 0.03
+    version: 0.10
   FLV::AMFWriter:
     file: lib/FLV/AMFWriter.pm
-    version: 0.03
+    version: 0.10
   FLV::AudioTag:
     file: lib/FLV/AudioTag.pm
-    version: 0.03
+    version: 0.10
   FLV::Base:
     file: lib/FLV/Base.pm
-    version: 0.03
+    version: 0.10
   FLV::Body:
     file: lib/FLV/Body.pm
-    version: 0.03
+    version: 0.10
   FLV::Constants:
     file: lib/FLV/Constants.pm
-    version: 0.03
+    version: 0.10
   FLV::File:
     file: lib/FLV/File.pm
-    version: 0.03
+    version: 0.10
   FLV::FromSWF:
     file: lib/FLV/FromSWF.pm
-    version: 0.03
+    version: 0.10
   FLV::Header:
     file: lib/FLV/Header.pm
-    version: 0.03
+    version: 0.10
   FLV::Info:
     file: lib/FLV/Info.pm
-    version: 0.03
+    version: 0.10
   FLV::MetaTag:
     file: lib/FLV/MetaTag.pm
-    version: 0.03
+    version: 0.10
   FLV::Tag:
     file: lib/FLV/Tag.pm
-    version: 0.03
+    version: 0.10
+  FLV::ToMP3:
+    file: lib/FLV/ToMP3.pm
+    version: 0.10
+  FLV::ToSWF:
+    file: lib/FLV/ToSwf.pm
+    version: 0.10
   FLV::VideoTag:
     file: lib/FLV/VideoTag.pm
-    version: 0.03
+    version: 0.10
 generated_by: Module::Build version 0.2801
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.2.html

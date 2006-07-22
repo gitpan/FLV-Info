@@ -13,7 +13,7 @@ use FLV::VideoTag;
 use English qw(-no_match_vars);
 use Carp;
 
-our $VERSION = '0.03';
+our $VERSION = '0.10';
 
 =for stopwords SWF transcodes
 
@@ -59,8 +59,6 @@ sub new
 
    my $self = bless {
       flv => FLV::File->new(),
-      framenumber => 0,
-      samples => 0,
       audio_skipframes => 1,
    }, $pkg;
    $self->{flv}->empty();
@@ -80,11 +78,23 @@ sub parse_swf
    my $self = shift;
    my $infile = shift;
 
+   $self->{framenumber} = 0;
+   $self->{samples} = 0;
+   $self->{videobytes} = 0;
+   $self->{audiobytes} = 0;
    my $parser = SWF::Parser->new(
       header_callback => sub { $self->_header(@_); },
       tag_callback => sub { $self->_tag(@_); },
    );
    $parser->parse_file($infile);
+
+   # This is a rough approximation, but should be good enough
+   my $duration = $self->{flv}->get_meta('duration');
+   my $vidrate = $self->{videobytes} * 8 / (1024 * $duration); # kbps
+   my $audrate = $self->{audiobytes} * 8 / (1024 * $duration); # kbps
+   $self->{flv}->set_meta(videodatarate => $vidrate);
+   $self->{flv}->set_meta(audiodatarate => $audrate);
+
    return;
 }
 
@@ -101,7 +111,15 @@ sub save
    my $outfile = shift;
 
    my $outfh;
-   open $outfh, '>', $outfile or die 'Failed to write FLV: '.$OS_ERROR;
+   if ($outfile eq q{-})
+   {
+      $outfh = \*STDOUT;
+   }
+   else
+   {
+      open $outfh, '>', $outfile or die 'Failed to write FLV: '.$OS_ERROR;
+   }
+   binmode $outfh;
    $self->{flv}->set_meta(creationdate => scalar gmtime);
    if (!$self->{flv}->serialize($outfh))
    {
@@ -164,12 +182,12 @@ sub _audio_stream
    my $stream = shift;
    my $length = shift;
 
-   my ($flags1, $flags2, $count) = unpack 'CCv', $stream->get_string(4);
-   $self->{audiocodec} = ($flags2 >> 4) & 0xf;
-   $self->{audiorate} = ($flags2 >> 2) & 0x3;
-   $self->{audiosize} = ($flags2 >> 1) & 0x1;
-   $self->{stereo} = $flags2 & 0x1;
-   #printf "flags %02x %02x, $self->{audiocodec}, $self->{audiorate}, $self->{audiosize}, $self->{stereo}\n", $flags1, $flags2;
+   my ($playflags, $streamflags, $count) = unpack 'CCv', $stream->get_string(4);
+   $self->{audiocodec} = ($streamflags >> 4) & 0xf;
+   $self->{audiorate} = ($streamflags >> 2) & 0x3;
+   $self->{audiosize} = ($streamflags >> 1) & 0x1;
+   $self->{stereo} = $streamflags & 0x1;
+   #printf "flags %02x %02x, $self->{audiocodec}, $self->{audiorate}, $self->{audiosize}, $self->{stereo}\n", $playflags, $streamflags;
    if ($self->{audiocodec} == 2 && $length > 4)
    {
       my ($latency) = unpack 'v', $stream->get_string(2);
@@ -204,6 +222,7 @@ sub _audio_block
       my ($seek) = unpack 'v', $stream->get_string(2);
       # unsigned -> signed conversion
       $seek = unpack 's', pack 'S', $seek;
+      #print "frame $self->{framenumber}, samples $samples, seek $seek, length $length\n";
 
       $audiotag->{data} = $stream->get_string($length-4);
 
@@ -221,7 +240,9 @@ sub _audio_block
       $audiotag->{data} = $stream->get_string($length);
    }
    $audiotag->{start} = int $millisec;
+
    push @{$self->{flv}->{body}->{tags}}, $audiotag;
+   $self->{audiobytes} += $length;
 
    return;
 }
@@ -269,7 +290,7 @@ sub _video_frame
    elsif ($self->{codec} == 3)
    {
       $videotag->_parse_screen_video(0);
-      $videotag->{type} = $framenum ? 2 : 1; # zeroth frame is a key frame, all others are deltas
+      $videotag->{type} = $framenum ? 2 : 1; # zeroth frame is a key frame, all others are deltas.  Right???
    }
    elsif ($self->{codec} == 4)
    {
@@ -278,7 +299,21 @@ sub _video_frame
    }
    
    push @{$self->{flv}->{body}->{tags}}, $videotag;
+   $self->{videobytes} += $length;
+
    return;
 }
 
 1;
+
+__END__
+
+=back
+
+=head1 AUTHOR
+
+Clotho Advanced Media Inc., I<cpan@clotho.com>
+
+Primary developer: Chris Dolan
+
+=cut

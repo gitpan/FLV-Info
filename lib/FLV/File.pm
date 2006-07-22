@@ -10,7 +10,7 @@ use FLV::Header;
 use FLV::Body;
 use FLV::MetaTag;
 
-our $VERSION = '0.03';
+our $VERSION = '0.10';
 
 =head1 NAME
 
@@ -26,6 +26,8 @@ under the same terms as Perl itself.
 =head1 METHODS
 
 This is a subclass of FLV::Base.
+
+=head2 READ/WRITE METHODS
 
 =over
 
@@ -96,6 +98,78 @@ sub parse
    return;
 }
 
+=item $self->populate_meta()
+
+Fill in various C<onMetadata> fields if they are not already present.
+
+=cut
+
+sub populate_meta
+{
+   my $self = shift;
+
+   my %info = (
+      vidtags => 0,
+      audtags => 0,
+      vidbytes => 0,
+      audbytes => 0,
+      lasttime => 0,
+   );
+   my $invalid = '-1';
+   for my $tag ($self->{body}->get_tags())
+   {
+      if ($tag->isa('FLV::VideoTag'))
+      {
+         $info{vidtags}++;
+         $info{vidbytes} += length $tag->{data};
+         my $time = 0.001 * $tag->{start};
+         if ($info{lasttime} < $time)
+         {
+            $info{lasttime} = $time;
+         }
+         for my $key (qw(width height type codec))
+         {
+            $info{'vid'.$key} = defined $info{'vid'.$key} && $tag->{$key} != $info{'vid'.$key} ?
+                $invalid : $tag->{$key};
+         }
+      }
+      elsif ($tag->isa('FLV::AudioTag'))
+      {
+         $info{audtags}++;
+         $info{audbytes} += length $tag->{data};
+         for my $key (qw(format codec type size))
+         {
+            $info{'aud'.$key} = defined $info{'aud'.$key} && $tag->{$key} != $info{'aud'.$key} ?
+                $invalid : $tag->{$key};
+         }
+      }
+   }
+   my $duration = $info{vidtags} > 1 ? $info{lasttime} * $info{vidtags} / ($info{vidtags} - 1) : 0;
+   my %meta = (
+      canSeekToEnd  => 1,
+      $duration > 0 ? (
+         duration      => $duration,
+         videodatarate => $info{vidbytes} * 8 / (1024 * $duration), # kbps
+         audiodatarate => $info{audbytes} * 8 / (1024 * $duration), # kbps
+         framerate     => $info{vidtags}/$duration,
+      ) : (),
+      defined $info{audcodec} && $info{audcodec} ne $invalid ? (audiocodecid  => $info{audcodec}) : (),
+      defined $info{vidcodec} && $info{vidcodec} ne $invalid ? (videocodecid  => $info{vidcodec}) : (),
+      defined $info{vidwidth} && $info{vidwidth} ne $invalid ? (width  => $info{vidwidth}) : (),
+      defined $info{vidheight} && $info{vidheight} ne $invalid ? (height  => $info{vidheight}) : (),
+   );
+
+   for my $key (keys %meta)
+   {
+      if (!defined $self->get_meta($key))
+      {
+         $self->set_meta($key => $meta{$key});
+      }
+   }
+
+   return;
+}
+
 =item $self->serialize($filehandle)
 
 Serializes the in-memory FLV data.  If that representation is not
@@ -120,6 +194,12 @@ sub serialize
    return $self->{header}->serialize($filehandle)
        && $self->{body}->serialize($filehandle);
 }
+
+=back
+
+=head2 ACCESSORS
+
+=over
 
 =item $self->get_info()
 
@@ -150,6 +230,70 @@ sub get_filename
    my $self = shift;
    return $self->{filename};
 }
+
+
+=item $self->get_meta($key);
+
+=item $self->set_meta($key, $value);
+
+These are convenience functions for interacting with an C<onMetadata>
+tag at time 0, which is a common convention in FLV files.  If the 0th
+tag is not an L<FLV::MetaTag> instance, one is created and prepended
+to the tag list.
+
+See also C<get_meta> and C<set_meta> in L<FLV::Body>.
+
+=cut
+
+sub get_meta
+{
+   my $self = shift;
+   my $key = shift;
+
+   return if (!$self->{body});
+   return $self->{body}->get_meta($key);
+}
+
+sub set_meta
+{
+   my $self = shift;
+   my $key = shift;
+   my $value = shift;
+
+   $self->{body} ||= FLV::Body->new();
+   $self->{body}->set_meta($key, $value);
+   return;
+}
+
+=item $self->get_header()
+
+=item $self->get_body()
+
+These methods return the FLV::Header and FLV::Body instance,
+respectively.  Those will be C<undef> until you call either empty() or
+parse().
+
+=cut
+
+sub get_header
+{
+   my $self = shift;
+   return $self->{header};
+}
+
+sub get_body
+{
+   my $self = shift;
+   return $self->{body};
+}
+
+=back
+
+=head2 PARSING UTILITIES
+
+The following methods are only used during the parsing phase.
+
+=over
 
 =item $self->get_bytes($n)
 
@@ -221,39 +365,6 @@ sub at_end
       die 'Internal error: attempt to read a closed filehandle';
    }
    return eof $fh;
-}
-
-=item $self->get_meta($key);
-
-=item $self->set_meta($key, $value);
-
-These are convenience functions for interacting with an C<onMetadata>
-tag at time 0, which is a common convention in FLV files.  If the 0th
-tag is not an L<FLV::MetaTag> instance, one is created and prepended
-to the tag list.
-
-See also C<get_meta> and C<set_meta> in L<FLV::Body>.
-
-=cut
-
-sub get_meta
-{
-   my $self = shift;
-   my $key = shift;
-
-   return if (!$self->{body});
-   return $self->{body}->get_meta($key);
-}
-
-sub set_meta
-{
-   my $self = shift;
-   my $key = shift;
-   my $value = shift;
-
-   $self->{body} ||= FLV::Body->new();
-   $self->{body}->set_meta($key, $value);
-   return;
 }
 
 1;

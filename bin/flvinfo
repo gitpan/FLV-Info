@@ -10,7 +10,7 @@ use Pod::Usage;
 use English qw(-no_match_vars);
 use Digest::MD5 qw(md5_hex);
 
-our $VERSION = '0.03';
+our $VERSION = '0.10';
 
 my %opts = (
             verbose    => 0,
@@ -51,8 +51,8 @@ while (@ARGV > 0)
       {
          (my $type = ref $tag) =~ s/\A FLV:://xms;
          my $len = length $tag->{data};
-         my $md5 = md5_hex("$tag->{data}");
-         print "    $type $tag->{start} ms, $len bytes, md5 $md5\n";
+         my $md5hex = md5_hex("$tag->{data}");
+         print "    $type $tag->{start} ms, $len bytes, md5 $md5hex\n";
       }
    }
    if (@ARGV > 0)

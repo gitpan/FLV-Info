@@ -6,7 +6,7 @@ use List::Util qw(max);
 
 use FLV::File;
 
-our $VERSION = '0.03';
+our $VERSION = '0.10';
 
 =for stopwords FLVTool2 interframes keyframes
 
@@ -196,6 +196,18 @@ sub report
    }
 
    return $out;
+}
+
+=item $self->get_file()
+
+Returns the FLV::File instance.  This will be C<undef> until you call parse().
+
+=cut
+
+sub get_file
+{
+   my $self = shift;
+   return $self->{file};
 }
 
 1;

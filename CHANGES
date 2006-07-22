@@ -1,5 +1,11 @@
 Revision history for Perl module FLV::Info
 
+0.10  21 Jul 2006
+      [ENHANCEMENTS]
+      - Add flv2swf transcoder
+      - Add flv2mp3 transcoder
+
+
 0.03  14 Jul 2006
       [ENHANCEMENTS]
       - Add swf2flv transcoder

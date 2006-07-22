@@ -7,19 +7,19 @@ use strict;
 use Getopt::Long;
 use Pod::Usage;
 use English qw(-no_match_vars);
-use FLV::FromSWF;
+use FLV::ToSWF;
 
 our $VERSION = '0.10';
 
 my %opts = (
-   skipframes => 1,
+   background => '000000',
    verbose    => 0,
    help       => 0,
    version    => 0,
 );
 
 Getopt::Long::Configure('bundling');
-GetOptions('s|skipframes=i' => \$opts{skipframes},
+GetOptions('b|background=s' => \$opts{background},
            'v|verbose'      => \$opts{verbose},
            'h|help'         => \$opts{help},
            'V|version'      => \$opts{version},
@@ -42,26 +42,27 @@ if (@ARGV < 2)
 my $infile = shift;
 my $outfile = shift;
 
-my $converter = FLV::FromSWF->new();
-$converter->{audio_skipframes} = $opts{skipframes};
-$converter->parse_swf($infile);
+my $converter = FLV::ToSWF->new();
+my @bg = map {hex} $opts{background} =~ m/([\da-fA-F]{2})/gxms;
+$converter->{background_color} = \@bg;
+$converter->parse_flv($infile);
 $converter->save($outfile);
 
 __END__
 
-=for stopwords SWF FLV MX swf2flv flv2swf file.swf file.flv transcode
+=for stopwords SWF FLV MX flv2swf swf2flv file.swf file.flv transcode
 
 =head1 NAME
 
-swf2flv - Transform a video SWF into an FLV
+flv2swf - Transform an FLV file into a SWF file
 
 =head1 SYNOPSIS
 
-swf2flv [options] file.swf file.flv
+flv2swf [options] file.flv file.swf
 
  Options:
-   -s --skipframes=n   How many blank frames are expected at the beginning of the video
-                       Defaults to 1, which is appropriate for On2 Flix output.
+   -b --baackground=s  Specify an RRGGBB color for the background
+                       Defaults to 000000, which is black
    -v --verbose        Print diagnostic messages
    -h --help           Verbose help message
    -V --version        Print version
@@ -93,7 +94,7 @@ FLV::FromSWF
 
 FLV::ToSWF
 
-flv2swf
+swf2flv
 
 =head1 AUTHOR
 

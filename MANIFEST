@@ -1,4 +1,6 @@
 index.html
+bin/flv2mp3
+bin/flv2swf
 bin/flvinfo
 bin/swf2flv
 Build.PL
@@ -15,6 +17,8 @@ lib/FLV/Header.pm
 lib/FLV/Info.pm
 lib/FLV/MetaTag.pm
 lib/FLV/Tag.pm
+lib/FLV/ToMP3.pm
+lib/FLV/ToSwf.pm
 lib/FLV/VideoTag.pm
 LICENSE
 Makefile.PL
@@ -22,9 +26,11 @@ MANIFEST			This list of files
 META.yml
 README
 t/flv.t
+t/mp3.t
 t/pod-coverage.t
 t/pod.t
 t/samples/flash6.flv
 t/samples/flash6.swf
 t/samples/flash8.flv
+t/samples/flash8.swf
 t/swf.t

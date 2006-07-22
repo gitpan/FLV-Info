@@ -4,15 +4,15 @@ use warnings;
 use strict;
 use File::Temp qw(tempfile);
 use File::Spec;
-use Test::More tests => 4 + 1 * 7; # general tests + number of samples * test per sample
+use Digest::MD5 qw(md5_hex);
+use Test::More tests => 7 + 1 * 20; # general tests + number of samples * test per sample
 
 BEGIN
 {
    use_ok('FLV::Info');
    use_ok('FLV::FromSWF');
+   use_ok('FLV::ToSWF');
 }
-
-# TODO: rebuild the SWF file, because it was encoded at 22 kHz vs 11 kHz for the flv!!
 
 my @samples = (
    {
@@ -24,19 +24,22 @@ my @samples = (
 
 my @cleanup;
 
+# SWF -> FLV
+
 {
    my $converter = FLV::FromSWF->new();
    eval { $converter->parse_swf('nosuchfile.swf'); };
-   like($@, qr/No such file or directory/, 'parse non-existent file');
+   like($@, qr/No such file or directory/, 'FromSWF parse non-existent file');
 
    eval { $converter->save(File::Spec->catfile('nosuchdir/file.flv')); };
-   like($@, qr/Failed to write FLV/, 'impossible output filename');
+   like($@, qr/Failed to write/, 'FromSWF impossible output filename');
 }
 
 for my $sample (@samples)
 {
    my $reader = FLV::Info->new();
    $reader->parse($sample->{flvfile});
+   my $origflv = $reader->get_file();
 
    my $converter = FLV::FromSWF->new();
    $converter->parse_swf($sample->{swffile});
@@ -49,41 +52,112 @@ for my $sample (@samples)
 
    my $rereader = FLV::Info->new();
    $rereader->parse($tempfilename);
+   my $newflv = $rereader->get_file();
 
    for my $key (@{$sample->{comparemeta}})
    {
-      is($rereader->{file}->get_meta($key), $reader->{file}->get_meta($key), 'meta '.$key);
+      is($newflv->get_meta($key), $origflv->get_meta($key), 'FromSWF meta '.$key);
    }
 
-   is($rereader->{file}->{body}->count_video_frames(), $reader->{file}->{body}->count_video_frames(), 'video frames');
-   #is($rereader->{file}->{body}->count_audio_packets(), $reader->{file}->{body}->count_audio_packets(), 'audio packets');
-   is($rereader->{file}->{body}->count_meta_tags(), $reader->{file}->{body}->count_meta_tags(), 'meta tags');
+   is(scalar $newflv->get_body()->get_video_frames(),
+      scalar $origflv->get_body()->get_video_frames(), 'FromSWF video frames');
+   #is(scalar $newflv->get_body()->get_audio_packets(),
+   #   scalar $origflv->get_body()->get_audio_packets(), 'FromSWF audio packets');
+   is(scalar $newflv->get_body()->get_meta_tags(),
+      scalar $origflv->get_body()->get_meta_tags(), 'FromSWF meta tags');
 
-#    # remove properties which are guaranteed to differ
-#    for my $r ($reader, $rereader)
-#    {
-#       my $meta = $r->{file}->{body}->{tags}->[0]->{data}->[1];
-#       for my $key (qw(videodatarate audiodatarate duration creationdate audiodelay))
-#       {
-#          delete $meta->{$key};
-#       }
-#       @{$r->{file}->{body}->{tags}}
-#          = sort {$a->{start} <=> $b->{start} || (ref $a) cmp (ref $b)}
-#            @{$r->{file}->{body}->{tags}};
-# 
-#       delete $_->{data} for @{$r->{file}->{body}->{tags}};
-# 
-#       $r->{file}->{filename} = undef;
-#    }
-# 
-#    shift @{$reader->{file}->{body}->{tags}};
-# 
-#    use File::Slurp;use Data::Dumper;
-#    write_file 't1', Dumper $reader->{file};
-#    write_file 't2', Dumper $rereader->{file};
-# 
-#    is_deeply($rereader->{file}, $reader->{file}, 'compare');
+   is_deeply([$newflv->get_body()->get_video_frames()],
+             [$origflv->get_body()->get_video_frames()],
+             'FromSWF detailed videotag comparison');
+
+   my @newaudio = map {$_->{data}} $newflv->get_body()->get_audio_packets();
+   my @origaudio = map {$_->{data}} $origflv->get_body()->get_audio_packets();
+   my $newaudio = join q{}, @newaudio;
+   my $origaudio = join q{}, @origaudio;
+
+   # Deliberately ignore omitted trailing audio
+   # This is an issue with the On2 Flix 8.004 FLV vs. SWF **encoders**
+   if (length $newaudio < length $origaudio)
+   {
+      $origaudio = substr $newaudio, 0, length $newaudio;
+   }
+
+   # This test is silly, given the above
+   is(length($newaudio), length($origaudio), 'FromSWF detailed audio data comparison');
+
+   is(md5_hex($newaudio), md5_hex($origaudio), 'FromSWF detailed audio data comparison');
 }
+
+# FLV -> SWF
+
+{
+   my $converter = FLV::ToSWF->new();
+   eval { $converter->parse_flv('nosuchfile.flv'); };
+   like($@, qr/No such file or directory/, 'ToSWF parse non-existent file');
+
+   eval { $converter->save(File::Spec->catfile('nosuchdir/file.swf')); };
+   like($@, qr/No such file or directory/, 'ToSWF impossible output filename');
+}
+
+for my $sample (@samples)
+{
+   my $converter = FLV::ToSWF->new();
+   $converter->parse_flv($sample->{flvfile});
+   my $origflv = $converter->{flv};
+   # Write the SWF back out as a temp file
+   my ($fh, $tempswf) = tempfile();
+   push @cleanup, $tempswf;
+   close $fh;
+   $converter->save($tempswf);
+
+   my $reconverter = FLV::FromSWF->new();
+   $reconverter->parse_swf($tempswf);
+   my $newflv = $reconverter->{flv};
+
+   for my $key (@{$sample->{comparemeta}})
+   {
+      is($newflv->get_meta($key), $origflv->get_meta($key), 'ToSWF meta '.$key);
+   }
+
+   is(scalar $newflv->get_body()->get_video_frames(),
+      scalar $origflv->get_body()->get_video_frames(), 'ToSWF video frames');
+   #is(scalar $newflv->get_body()->get_audio_packets(),
+   #   scalar $origflv->get_body()->get_audio_packets(), 'ToSWF audio packets');
+   is(scalar $newflv->get_body()->get_meta_tags(),
+      scalar $origflv->get_body()->get_meta_tags(), 'ToSWF meta tags');
+
+   is_deeply([$newflv->get_body()->get_video_frames()],
+             [$origflv->get_body()->get_video_frames()],
+             'ToSWF detailed videotag comparison');
+   
+   # Need to account for the fact that SWF lumps audio frames together but FLV doesn't
+   my @newaudio = map {$_->{data}} $newflv->get_body()->get_audio_packets();
+   my @origaudio = map {$_->{data}} $origflv->get_body()->get_audio_packets();
+   my $newaudio = join q{}, @newaudio;
+   my $origaudio = join q{}, @origaudio;
+   
+   # Reconstitute orig with the same gaps as new
+   my $bytes = 0;
+   @origaudio = map {my $o=$bytes;$bytes+=length;substr $origaudio, $o, length} @newaudio;
+   if ($bytes < length $origaudio)
+   {
+      $origaudio[-1] .= substr $origaudio, $bytes;
+   }
+
+   ## Even more detailed tests.  Turn these on to find the exact error if the "detailed" tests below fail
+   if (0)
+   {
+      for my $i (0..$#newaudio)
+      {
+         is(length($newaudio[$i]), length($origaudio[$i]), 'length '.$i);
+         is(md5_hex($newaudio[$i]), md5_hex($origaudio[$i]), 'md5 '.$i);
+      }
+   }
+
+   is(length($newaudio), length($origaudio), 'detailed audio data comparison');
+   is(md5_hex($newaudio), md5_hex($origaudio), 'detailed audio data comparison');
+}
+
 
 END
 {
