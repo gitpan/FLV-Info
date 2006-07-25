@@ -10,7 +10,7 @@ use FLV::Header;
 use FLV::Body;
 use FLV::MetaTag;
 
-our $VERSION = '0.10';
+our $VERSION = '0.11';
 
 =head1 NAME
 
@@ -42,8 +42,8 @@ sub empty
 {
    my $self = shift;
 
-   $self->{header} = FLV::Header->new();
-   $self->{body} = FLV::Body->new();
+   $self->{header}       = FLV::Header->new();
+   $self->{body}         = FLV::Body->new();
    $self->{body}->{tags} = [];
    return;
 }
@@ -61,7 +61,7 @@ There is no return value.
 
 sub parse
 {
-   my $self = shift;
+   my $self  = shift;
    my $input = shift;
 
    $self->{header}     = undef;
@@ -79,22 +79,25 @@ sub parse
       else
       {
          $self->{filename} = $input;
-         open my $fh, '<', $self->{filename}
-            or croak q{}.$OS_ERROR;
+         open my $fh, '<', $self->{filename} or croak q{} . $OS_ERROR;
          binmode $fh;
          $self->{filehandle} = $fh;
       }
+
       $self->{header} = FLV::Header->new();
       $self->{header}->parse($self); # might throw exception
+
       $self->{body} = FLV::Body->new();
-      $self->{body}->parse($self); # might throw exception
+      $self->{body}->parse($self);   # might throw exception
    };
    if ($EVAL_ERROR)
    {
-      die 'Failed to read FLV file: '.$EVAL_ERROR;
+      die 'Failed to read FLV file: ' . $EVAL_ERROR;
    }
-   $self->{filehandle} = undef; # implicitly close the filehandle
-   $self->{pos} = 0;
+
+   $self->{filehandle} = undef;   # implicitly close the filehandle
+   $self->{pos}        = 0;
+
    return;
 }
 
@@ -109,12 +112,13 @@ sub populate_meta
    my $self = shift;
 
    my %info = (
-      vidtags => 0,
-      audtags => 0,
+      vidtags  => 0,
+      audtags  => 0,
       vidbytes => 0,
       audbytes => 0,
       lasttime => 0,
    );
+
    my $invalid = '-1';
    for my $tag ($self->{body}->get_tags())
    {
@@ -144,7 +148,9 @@ sub populate_meta
          }
       }
    }
-   my $duration = $info{vidtags} > 1 ? $info{lasttime} * $info{vidtags} / ($info{vidtags} - 1) : 0;
+   my $duration
+       = $info{vidtags} > 1 ? $info{lasttime} * $info{vidtags} / ($info{vidtags} - 1) : 0;
+
    my %meta = (
       canSeekToEnd  => 1,
       $duration > 0 ? (
@@ -180,7 +186,7 @@ indicating whether writing to the file handle was successful.
 
 sub serialize
 {
-   my $self = shift;
+   my $self       = shift;
    my $filehandle = shift || croak 'Please specify a filehandle';
 
    if (!$self->{header})
@@ -231,7 +237,6 @@ sub get_filename
    return $self->{filename};
 }
 
-
 =item $self->get_meta($key);
 
 =item $self->set_meta($key, $value);
@@ -248,7 +253,7 @@ See also C<get_meta> and C<set_meta> in L<FLV::Body>.
 sub get_meta
 {
    my $self = shift;
-   my $key = shift;
+   my $key  = shift;
 
    return if (!$self->{body});
    return $self->{body}->get_meta($key);
@@ -256,8 +261,8 @@ sub get_meta
 
 sub set_meta
 {
-   my $self = shift;
-   my $key = shift;
+   my $self  = shift;
+   my $key   = shift;
    my $value = shift;
 
    $self->{body} ||= FLV::Body->new();
@@ -306,7 +311,7 @@ before all the bytes can be read.
 sub get_bytes
 {
    my $self = shift;
-   my $n = shift || 0;
+   my $n    = shift || 0;
 
    return q{} if ($n <= 0);
 

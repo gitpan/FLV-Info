@@ -10,7 +10,7 @@ use base 'FLV::Base';
 
 use FLV::Constants;
 
-our $VERSION = '0.10';
+our $VERSION = '0.11';
 
 =head1 NAME
 
@@ -43,8 +43,8 @@ Note: this method needs more work to extract the format-specific data.
 
 sub parse
 {
-   my $self = shift;
-   my $file = shift;
+   my $self     = shift;
+   my $file     = shift;
    my $datasize = shift;
 
    my $flags = unpack 'C', $file->get_bytes(1);
@@ -56,7 +56,7 @@ sub parse
 
    if (!exists $AUDIO_FORMATS{$format})
    {
-      die 'Unknown audio format '.$format.' at byte '.$file->get_pos(-1);
+      die 'Unknown audio format ' . $format . ' at byte ' . $file->get_pos(-1);
    }
 
    $self->{format} = $format;
@@ -64,7 +64,7 @@ sub parse
    $self->{size}   = $size;
    $self->{type}   = $type;
 
-   $self->{data} = $file->get_bytes($datasize-1);
+   $self->{data} = $file->get_bytes($datasize - 1);
 
    return;
 }

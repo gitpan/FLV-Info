@@ -5,7 +5,7 @@ use strict;
 use File::Temp qw(tempfile);
 use File::Spec;
 use Digest::MD5 qw(md5_hex);
-use Test::More tests => 7 + 1 * 20; # general tests + number of samples * test per sample
+use Test::More tests => 7 + 2 * 20; # general tests + number of samples * test per sample
 
 BEGIN
 {
@@ -18,6 +18,11 @@ my @samples = (
    {
       swffile => File::Spec->catfile('t', 'samples', 'flash6.swf'),
       flvfile => File::Spec->catfile('t', 'samples', 'flash6.flv'),
+      comparemeta => [qw(framerate audiocodecid videocodecid width height)],
+   },
+   {
+      swffile => File::Spec->catfile('t', 'samples', 'flash8.swf'),
+      flvfile => File::Spec->catfile('t', 'samples', 'flash8.flv'),
       comparemeta => [qw(framerate audiocodecid videocodecid width height)],
    },
 );
@@ -65,6 +70,14 @@ for my $sample (@samples)
    #   scalar $origflv->get_body()->get_audio_packets(), 'FromSWF audio packets');
    is(scalar $newflv->get_body()->get_meta_tags(),
       scalar $origflv->get_body()->get_meta_tags(), 'FromSWF meta tags');
+
+   #for my $tag ($newflv->get_body()->get_video_frames(),
+   #             $origflv->get_body()->get_video_frames())
+   #{
+   #   $tag->{data_length} = length $tag->{data};
+   #   $tag->{data_md5} = md5_hex($tag->{data});
+   #   delete $tag->{data};
+   #}
 
    is_deeply([$newflv->get_body()->get_video_frames()],
              [$origflv->get_body()->get_video_frames()],

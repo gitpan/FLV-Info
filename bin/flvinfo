@@ -10,7 +10,7 @@ use Pod::Usage;
 use English qw(-no_match_vars);
 use Digest::MD5 qw(md5_hex);
 
-our $VERSION = '0.10';
+our $VERSION = '0.11';
 
 my %opts = (
             verbose    => 0,

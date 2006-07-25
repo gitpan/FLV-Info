@@ -10,7 +10,7 @@ use base 'FLV::Base';
 
 use FLV::Constants;
 
-our $VERSION = '0.10';
+our $VERSION = '0.11';
 
 =for stopwords codec
 
@@ -45,8 +45,8 @@ Note: this method needs more work to extract the codec specific data.
 
 sub parse
 {
-   my $self = shift;
-   my $file = shift;
+   my $self     = shift;
+   my $file     = shift;
    my $datasize = shift;
 
    my $flags = unpack 'C', $file->get_bytes(1);
@@ -57,11 +57,11 @@ sub parse
 
    if (!exists $VIDEO_CODEC_IDS{$codec})
    {
-      die 'Unknown video codec '.$codec.' at byte '.$file->get_pos(-1);
+      die 'Unknown video codec ' . $codec . ' at byte ' . $file->get_pos(-1);
    }
    if (!exists $VIDEO_FRAME_TYPES{$type})
    {
-      die 'Unknown video frame type at byte '.$file->get_pos(-1);
+      die 'Unknown video frame type at byte ' . $file->get_pos(-1);
    }
 
    $self->{codec} = $codec;
@@ -69,20 +69,15 @@ sub parse
 
    my $pos = $file->get_pos();
 
-   $self->{data} = $file->get_bytes($datasize-1);
+   $self->{data} = $file->get_bytes($datasize - 1);
 
-   if ($self->{codec} == 2)
-   {
-      $self->_parse_h263($pos);
-   }
-   elsif ($self->{codec} == 3)
-   {
-      $self->_parse_screen_video($pos);
-   }
-   elsif ($self->{codec} == 4)
-   {
-      $self->_parse_on2vp6($pos);
-   }
+   my $result
+       = $self->{codec} == 2 ? $self->_parse_h263($pos)
+       : $self->{codec} == 3 ? $self->_parse_screen_video($pos)
+       : $self->{codec} == 4 ? $self->_parse_on2vp6($pos)
+       : $self->{codec} == 5 ? $self->_parse_on2vp6_alpha($pos)
+       : $self->{codec} == 6 ? $self->_parse_screen_video($pos)
+       : die 'Unknown video type';
 
    return;
 }
@@ -90,7 +85,7 @@ sub parse
 sub _parse_h263
 {
    my $self = shift;
-   my $pos = shift;
+   my $pos  = shift;
 
    # Surely there's a better way than this....
    my $bits = unpack 'B67', $self->{data};
@@ -101,15 +96,15 @@ sub _parse_h263
       (ord pack 'B8', substr $bits, 49, 8),
       (ord pack 'B8', substr $bits, 57, 8),
    );
-   my ($width, $height, $offset) =
-       $sizecode == '000' ? ($d[0], $d[1], 16)
-     : $sizecode == '001' ? ($d[0]*256+$d[1], $d[2]*256+$d[3], 32)
-     : $sizecode == '010' ? (352, 288, 0)
-     : $sizecode == '011' ? (176, 144, 0)
-     : $sizecode == '100' ? (128,  96, 0)
-     : $sizecode == '101' ? (320, 240, 0)
-     : $sizecode == '110' ? (160, 120, 0)
-     : die 'Illegal value for H.263 size code at byte '.$pos;
+   my ($width, $height, $offset)
+       = $sizecode == '000' ? ($d[0], $d[1], 16)
+       : $sizecode == '001' ? ($d[0] * 256 + $d[1], $d[2] * 256 + $d[3], 32)
+       : $sizecode == '010' ? (352, 288, 0)
+       : $sizecode == '011' ? (176, 144, 0)
+       : $sizecode == '100' ? (128,  96, 0)
+       : $sizecode == '101' ? (320, 240, 0)
+       : $sizecode == '110' ? (160, 120, 0)
+       : die 'Illegal value for H.263 size code at byte ' . $pos;
 
    $self->{width}  = $width;
    $self->{height} = $height;
@@ -121,7 +116,8 @@ sub _parse_h263
    }
    elsif ($type != $self->{type})
    {
-      die "Type mismatch: header says $VIDEO_FRAME_TYPES{$self->{type}}, data says $VIDEO_FRAME_TYPES{$type}";
+      die "Type mismatch: header says $VIDEO_FRAME_TYPES{$self->{type}}, " .
+          "data says $VIDEO_FRAME_TYPES{$type}";
    }
 
    return;
@@ -130,12 +126,13 @@ sub _parse_h263
 sub _parse_screen_video
 {
    my $self = shift;
-   my $pos = shift;
+   my $pos  = shift;
 
    # Extract 4 bytes, big-endian
    my ($width, $height) = unpack 'nn', $self->{data};
+
    # Only use the lower 12 bits of each
-   $width &= 0x3fff;
+   $width  &= 0x3fff;
    $height &= 0x3fff;
 
    $self->{width}  = $width;
@@ -149,7 +146,29 @@ sub _parse_screen_video
 sub _parse_on2vp6
 {
    my $self = shift;
-   my $pos = shift;
+   my $pos  = shift;
+
+   if (!$self->{type})
+   {
+      # Bit 7 of the header (after 8 bits of offset) distinguishes keyframe from interframe
+      my @bytes = unpack 'CC', $self->{data};
+      $self->{type} = ($bytes[1] & 0x80) == 0 ? 1 : 2;
+   }
+
+   return;
+}
+
+sub _parse_on2vp6_alpha
+{
+   my $self = shift;
+   my $pos  = shift;
+
+   if (!$self->{type})
+   {
+      # Bit 7 of the header (after 32 bits of offset) distinguishes keyframe from interframe
+      my @bytes = unpack 'CCCCC', $self->{data};
+      $self->{type} = ($bytes[4] & 0x80) == 0 ? 1 : 2;
+   }
 
    return;
 }

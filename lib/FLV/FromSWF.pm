@@ -13,7 +13,7 @@ use FLV::VideoTag;
 use English qw(-no_match_vars);
 use Carp;
 
-our $VERSION = '0.10';
+our $VERSION = '0.11';
 
 =for stopwords SWF transcodes
 
@@ -75,13 +75,14 @@ video and audio nodes.
 
 sub parse_swf
 {
-   my $self = shift;
+   my $self   = shift;
    my $infile = shift;
 
    $self->{framenumber} = 0;
-   $self->{samples} = 0;
-   $self->{videobytes} = 0;
-   $self->{audiobytes} = 0;
+   $self->{samples}     = 0;
+   $self->{videobytes}  = 0;
+   $self->{audiobytes}  = 0;
+
    my $parser = SWF::Parser->new(
       header_callback => sub { $self->_header(@_); },
       tag_callback => sub { $self->_tag(@_); },
@@ -90,8 +91,8 @@ sub parse_swf
 
    # This is a rough approximation, but should be good enough
    my $duration = $self->{flv}->get_meta('duration');
-   my $vidrate = $self->{videobytes} * 8 / (1024 * $duration); # kbps
-   my $audrate = $self->{audiobytes} * 8 / (1024 * $duration); # kbps
+   my $vidrate  = $self->{videobytes} * 8 / (1024 * $duration);    # kbps
+   my $audrate  = $self->{audiobytes} * 8 / (1024 * $duration);    # kbps
    $self->{flv}->set_meta(videodatarate => $vidrate);
    $self->{flv}->set_meta(audiodatarate => $audrate);
 
@@ -107,7 +108,7 @@ C<parse_swf()>.  Throws an exception upon error.
 
 sub save
 {
-   my $self = shift;
+   my $self    = shift;
    my $outfile = shift;
 
    my $outfh;
@@ -117,7 +118,7 @@ sub save
    }
    else
    {
-      open $outfh, '>', $outfile or die 'Failed to write FLV: '.$OS_ERROR;
+      open $outfh, '>', $outfile or die 'Failed to write FLV: ' . $OS_ERROR;
    }
    binmode $outfh;
    $self->{flv}->set_meta(creationdate => scalar gmtime);
@@ -131,31 +132,33 @@ sub save
 
 sub _header
 {
-   my $self = shift;
+   my $self   = shift;
    my $parser = shift;
+
    my %header;
    @header{qw(signature version filelen xmin ymin xmax ymax rate count)} = @_;
    $self->{header} = \%header;
-   #use Data::Dumper; print Dumper \%header;
+
    $self->{flv}->set_meta(framerate => $header{rate});
-   $self->{flv}->set_meta(duration => $header{count}/$header{rate});
+   $self->{flv}->set_meta(duration  => $header{count} / $header{rate});
    return;
 }
 
 sub _tag
 {
-   my $self = shift;
+   my $self   = shift;
    my $parser = shift;
-   my $tagid = shift;
+   my $tagid  = shift;
    my $length = shift;
    my $stream = shift;
 
    # Naughty code: we use a private method from SWF::Element::Tag to
    # save ourselves the trouble of maintaining a mapping of tag ID to
    # human-readable name.
-   (my $tagname = SWF::Element::Tag->_tag_class($tagid)) =~ s/SWF::Element::Tag:://xms; ## no critic(ProtectPrivateSubs)
+   # TODO: rewrite to use SWF::Element::Tag methods
+   (my $tagname = SWF::Element::Tag->_tag_class($tagid))  ## no critic(ProtectPrivateSubs)
+       =~ s/SWF::Element::Tag:://xms;
 
-   #print "tag $tagname ($tagid) length $length\n";
    return 
        $tagname eq 'DefineVideoStream' ? $self->_video_stream($stream, $length)
      : $tagname eq 'VideoFrame'        ? $self->_video_frame($stream, $length)
@@ -168,7 +171,7 @@ sub _tag
 
 sub _show_frame
 {
-   my $self = shift;
+   my $self   = shift;
    my $stream = shift;
    my $length = shift;
 
@@ -178,19 +181,20 @@ sub _show_frame
 
 sub _audio_stream
 {
-   my $self = shift;
+   my $self   = shift;
    my $stream = shift;
    my $length = shift;
 
    my ($playflags, $streamflags, $count) = unpack 'CCv', $stream->get_string(4);
    $self->{audiocodec} = ($streamflags >> 4) & 0xf;
-   $self->{audiorate} = ($streamflags >> 2) & 0x3;
-   $self->{audiosize} = ($streamflags >> 1) & 0x1;
-   $self->{stereo} = $streamflags & 0x1;
-   #printf "flags %02x %02x, $self->{audiocodec}, $self->{audiorate}, $self->{audiosize}, $self->{stereo}\n", $playflags, $streamflags;
+   $self->{audiorate}  = ($streamflags >> 2) & 0x3;
+   $self->{audiosize}  = ($streamflags >> 1) & 0x1;
+   $self->{stereo}     = $streamflags & 0x1;
+
    if ($self->{audiocodec} == 2 && $length > 4)
    {
       my ($latency) = unpack 'v', $stream->get_string(2);
+
       # unsigned -> signed conversion
       $self->{audiolatency} = unpack 's', pack 'S', $latency;
    }
@@ -202,19 +206,22 @@ sub _audio_stream
 
 sub _audio_block
 {
-   my $self = shift;
+   my $self   = shift;
    my $stream = shift;
    my $length = shift;
 
-   return if (!$length); # empty block
+   return if (!$length);    # empty block
 
    my $audiotag = FLV::AudioTag->new();
+
    # time calculation will be redone for MP3...
    my $millisec = 1000 * $self->{framenumber} / $self->{header}->{rate};
+
    $audiotag->{format} = $self->{audiocodec};
-   $audiotag->{rate} = $self->{audiorate};
-   $audiotag->{size} = $self->{audiosize};
-   $audiotag->{type} = $self->{stereo};
+   $audiotag->{rate}   = $self->{audiorate};
+   $audiotag->{size}   = $self->{audiosize};
+   $audiotag->{type}   = $self->{stereo};
+
    if ($self->{audiocodec} == 2)
    {
       my ($samples) = unpack 'v', $stream->get_string(2);
@@ -222,18 +229,18 @@ sub _audio_block
       my ($seek) = unpack 'v', $stream->get_string(2);
       # unsigned -> signed conversion
       $seek = unpack 's', pack 'S', $seek;
-      #print "frame $self->{framenumber}, samples $samples, seek $seek, length $length\n";
 
-      $audiotag->{data} = $stream->get_string($length-4);
+      $audiotag->{data} = $stream->get_string($length - 4);
 
       (my $rate = $AUDIO_RATES{$self->{audiorate}}) =~ s/\D//gxms;
       if ($self->{samples} == 0)
       {
-         $self->{samples} = $rate * ($self->{framenumber} - $self->{audio_skipframes}) / $self->{header}->{rate};
+         $self->{samples}
+             = $rate * ($self->{framenumber} - $self->{audio_skipframes}) /
+               $self->{header}->{rate};
       }
       $millisec = 1000 * $self->{samples} / $rate;
       $self->{samples} += $samples;
-      #print "samples $samples, millisec $millisec, seek $seek, $time, length $length, rate $rate\n";
    }
    else
    {
@@ -249,29 +256,32 @@ sub _audio_block
 
 sub _video_stream
 {
-   my $self = shift;
+   my $self   = shift;
    my $stream = shift;
    my $length = shift;
 
-   my ($streamid, $nframes, $width, $height, $flags, $codec) = unpack 'vvvvCC', $stream->get_string(10);
+   my ($streamid, $nframes, $width, $height, $flags, $codec)
+       = unpack 'vvvvCC', $stream->get_string(10);
    if ($self->{streamid})
    {
       warn 'Found multiple video streams in this SWF, ignoring all but one';
       return;
    }
    $self->{streamid} = $streamid;
-   $self->{codec} = $codec;
+   $self->{codec}    = $codec;
+
    $self->{flv}->{header}->{has_video} = 1;
+
    $self->{flv}->set_meta(videocodecid => $codec);
-   $self->{flv}->set_meta(width => $width);
-   $self->{flv}->set_meta(height => $height);
-   #print "Stream $streamid, codec $codec\n";
+   $self->{flv}->set_meta(width        => $width);
+   $self->{flv}->set_meta(height       => $height);
+
    return;
 }
 
 sub _video_frame
 {
-   my $self = shift;
+   my $self   = shift;
    my $stream = shift;
    my $length = shift;
 
@@ -280,24 +290,34 @@ sub _video_frame
    my $videotag = FLV::VideoTag->new();
    my $millisec = 1000 * $self->{framenumber} / $self->{header}->{rate};
    $videotag->{start} = int $millisec;
-   $videotag->{data} = $stream->get_string($length - 4);
+   $videotag->{data}  = $stream->get_string($length - 4);
    $videotag->{codec} = $self->{codec};
-   #print "Video tag $framenum, start $videotag->{start}\n";
-   if ($self->{codec} == 2)
+
+   if ($self->{codec} == 2) ## no critic(ControlStructures::ProhibitCascadingIfElse)
    {
       $videotag->_parse_h263(0);
    }
-   elsif ($self->{codec} == 3)
+   elsif ($self->{codec} == 3 || $self->{codec} == 6)
    {
       $videotag->_parse_screen_video(0);
-      $videotag->{type} = $framenum ? 2 : 1; # zeroth frame is a key frame, all others are deltas.  Right???
+      # zeroth frame is a key frame, all others are deltas.  Right???
+      $videotag->{type} = $framenum ? 2 : 1;
    }
    elsif ($self->{codec} == 4)
    {
+      # prepend pixel offsets present in FLV, but absent in SWF
+      my $offset = pack 'C', 0;
+      $videotag->{data} = $offset . $videotag->{data};
       $videotag->_parse_on2vp6(0);
-      # TODO: keyframe vs. interframe
    }
-   
+   elsif ($self->{codec} == 5)
+   {
+      # prepend pixel offsets present in FLV, but absent in SWF
+      my $offset = pack 'C', 0;
+      $videotag->{data} = $offset . $videotag->{data};
+      $videotag->_parse_on2vp6_alpha(0);
+   }
+
    push @{$self->{flv}->{body}->{tags}}, $videotag;
    $self->{videobytes} += $length;
 

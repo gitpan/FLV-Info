@@ -12,7 +12,7 @@ use FLV::VideoTag;
 use FLV::AudioTag;
 use FLV::MetaTag;
 
-our $VERSION = '0.10';
+our $VERSION = '0.11';
 
 =head1 NAME
 
@@ -48,7 +48,7 @@ sub parse
 
    my @tags;
 
- TAGS:
+TAGS:
    while (1)
    {
       my $lastsize = $file->get_bytes(4);
@@ -59,12 +59,12 @@ sub parse
       }
 
       my $tag = FLV::Tag->new();
-      $tag->parse($file); # might throw exception
+      $tag->parse($file);    # might throw exception
       push @tags, $tag->get_payload();
    }
 
    my %tagorder = (
-      'FLV::MetaTag' => 1,
+      'FLV::MetaTag'  => 1,
       'FLV::AudioTag' => 2,
       'FLV::VideoTag' => 3,
    );
@@ -82,10 +82,10 @@ indicating whether writing to the file handle was successful.
 
 sub serialize
 {
-   my $self = shift;
+   my $self       = shift;
    my $filehandle = shift || croak 'Please specify a filehandle';
 
-   return if (! print {$filehandle} pack 'V', 0);
+   return if (!print {$filehandle} pack 'V', 0);
 
    for my $tag (@{$self->{tags}})
    {
@@ -111,11 +111,10 @@ sub get_info
 
    my %info = (
       duration    => $self->last_start_time(),
-      FLV::VideoTag->get_info(grep {$_->isa('FLV::VideoTag')} @{$self->{tags}}),
-      FLV::AudioTag->get_info(grep {$_->isa('FLV::AudioTag')} @{$self->{tags}}),
-      FLV::MetaTag->get_info(grep {$_->isa('FLV::MetaTag')} @{$self->{tags}}),
+      FLV::VideoTag->get_info(grep { $_->isa('FLV::VideoTag') } @{$self->{tags}}),
+      FLV::AudioTag->get_info(grep { $_->isa('FLV::AudioTag') } @{$self->{tags}}),
+      FLV::MetaTag->get_info(grep { $_->isa('FLV::MetaTag') } @{$self->{tags}}),
    );
-
 
    return %info;
 }
@@ -143,7 +142,7 @@ sub get_video_frames
 {
    my $self = shift;
 
-   return grep {$_->isa('FLV::VideoTag')} @{$self->{tags}};
+   return grep { $_->isa('FLV::VideoTag') } @{$self->{tags}};
 }
 
 =item $self->get_audio_packets()
@@ -156,7 +155,7 @@ sub get_audio_packets
 {
    my $self = shift;
 
-   return grep {$_->isa('FLV::AudioTag')} @{$self->{tags}};
+   return grep { $_->isa('FLV::AudioTag') } @{$self->{tags}};
 }
 
 =item $self->get_meta_tags()
@@ -169,7 +168,7 @@ sub get_meta_tags
 {
    my $self = shift;
 
-   return grep {$_->isa('FLV::MetaTag')} @{$self->{tags}};
+   return grep { $_->isa('FLV::MetaTag') } @{$self->{tags}};
 }
 
 =item $self->last_start_time()
@@ -203,24 +202,24 @@ See also C<get_value> and C<set_value> in L<FLV::MetaTag>.
 sub get_meta
 {
    my $self = shift;
-   my $key = shift;
+   my $key  = shift;
 
    return if (!$self->{tags});
    my $meta = $self->{tags}->[0];
-   return if (!eval {$meta->isa('FLV::MetaTag')});
+   return if (!eval { $meta->isa('FLV::MetaTag') });
    return $meta->get_value($key);
 }
 
 sub set_meta
 {
-   my $self = shift;
-   my $key = shift;
+   my $self  = shift;
+   my $key   = shift;
    my $value = shift;
 
    my $meta;
    $self->{tags} ||= [];
    $meta = $self->{tags}->[0];
-   if (!eval {$meta->isa('FLV::MetaTag')})
+   if (!eval { $meta->isa('FLV::MetaTag') })
    {
       $meta = FLV::MetaTag->new();
       $meta->{start} = 0;

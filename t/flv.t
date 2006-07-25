@@ -11,9 +11,6 @@ BEGIN
    use_ok('FLV::Info');
 }
 
-FLV::Base->set_verbosity(0);
-#FLV::Base->set_verbosity(1);
-
 my @samples = (
    {
       file => File::Spec->catfile('t', 'samples', 'flash6.flv'),
@@ -94,7 +91,7 @@ my @cleanup;
 
    ($fh, $tempfilename) = tempfile();
    push @cleanup, $tempfilename;
-   print {$fh} 'FLV'.pack 'CCN', 1, 2, 9;
+   print {$fh} 'FLV'.pack 'CCN', 1, 128, 9;
    close $fh;
    eval { $reader->parse($tempfilename); };
    like($@, qr/Reserved header flags are non-zero/, 'parse reserved-flag using flv header');

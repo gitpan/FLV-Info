@@ -6,13 +6,13 @@ use List::Util qw(max);
 
 use FLV::File;
 
-our $VERSION = '0.10';
+our $VERSION = '0.11';
 
 =for stopwords FLVTool2 interframes keyframes
 
 =head1 NAME
 
-FLV::Info - Extract metadata from Flash Video files
+FLV::Info - Extract metadata from Macromedia Flash Video files
 
 =head1 SYNOPSIS
 
@@ -25,7 +25,7 @@ FLV::Info - Extract metadata from Flash Video files
 
 =head1 DESCRIPTION
 
-This module reads Macromedia FLV files and reports metadata about
+This module reads Macromedia Flash Video (FLV) files and reports metadata about
 those files.
 
 =head1 LEGAL
@@ -44,6 +44,25 @@ Copyright 2006 Clotho Advanced Media, Inc., <cpan@clotho.com>
 
 This library is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.
+
+=head1 QUALITY
+
+We care about code quality.  The FLV-Info distribution complies with
+the following quality metrics:
+
+=over
+
+=item * Perl::Critic v0.18 passes
+
+=item * Devel::Cover test coverage over 90%
+
+=item * Pod::Coverage at 100%
+
+=item * Test::Spelling passes
+
+=item * Test::Portability::Files passes
+
+=back
 
 =head1 METHODS
 
@@ -80,12 +99,12 @@ There is no return value.
 
 sub parse
 {
-   my $self = shift;
+   my $self     = shift;
    my $filename = shift;
 
    $self->{info} = undef;
    $self->{file} = FLV::File->new();
-   $self->{file}->parse($filename); # might throw exception
+   $self->{file}->parse($filename);   # might throw exception
    return;
 }
 
@@ -150,7 +169,7 @@ sub report
    );
 
    # Flag keys to ignore in regex matches
-   my %seen = map {$_->{k} ? ($_->{k} => 1) : ()} @outputs;
+   my %seen = map { $_->{k} ? ($_->{k} => 1) : () } @outputs;
 
    # Apply regex matches
    for my $i (reverse 0 .. $#outputs)
@@ -159,7 +178,7 @@ sub report
       if ($output->{r})
       {
          my @r;
-         for my $key (grep {$_ =~ $output->{r}} sort keys %info)
+         for my $key (grep { $_ =~ $output->{r} } sort keys %info)
          {
             next if ($seen{$key});
             (my $label = $key) =~ s/$output->{r}//xms;
@@ -170,13 +189,13 @@ sub report
    }
 
    # Get the length of the longest label so we can pad the rest
-   my $max_label_length = max map {length $_->{l}} @outputs;
+   my $max_label_length = max map { length $_->{l} } @outputs;
 
    # Accumulate output string here
    my $out = q{};
    for my $output (@outputs)
    {
-      my $value   = $info{$output->{k}};
+      my $value = $info{$output->{k}};
       next if (!$value);
 
       # Apply filter if any
@@ -184,14 +203,16 @@ sub report
       {
          $value = $output->{f}->($value);
       }
+
       # Append unit(s) if any
       if ($output->{u})
       {
-         $value .= q{ }.$output->{u}.($value eq '1' ? q{} : 's');
+         $value .= q{ } . $output->{u} . ($value eq '1' ? q{} : 's');
       }
 
       my $label   = $output->{l};
       my $padding = q{ } x ($max_label_length - length $label);
+
       $out .= "$label $padding $value\n";
    }
 

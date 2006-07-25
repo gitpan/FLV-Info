@@ -7,7 +7,7 @@ use AMF::Perl::Util::Object;
 use AMF::Perl::IO::InputStream;
 use base 'AMF::Perl::IO::Deserializer';
 
-our $VERSION = '0.10';
+our $VERSION = '0.11';
 
 =for stopwords AMF Remoting
 
@@ -80,7 +80,6 @@ sub read_flv_meta
       for my $iter (1..20)
       {
          my $type = $self->{inputStream}->readByte();
-         #print "AMF type: $type\n";
          push @data, $self->readData($type);
       }
    };
@@ -111,12 +110,12 @@ if (! __PACKAGE__->can('readMixedArray'))
 {
    *readMixedArray = sub
    {
-      my ($self)=@_;
-      
+      my ($self) = @_;
+
       # This length is actually unused!  How odd...
       # Instead, a value with datatype == 9 is the end flag
       my $length = $self->{inputStream}->readLong();
-      
+
       return $self->readObject();
    };
 

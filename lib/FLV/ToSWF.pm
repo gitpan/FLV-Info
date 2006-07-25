@@ -12,7 +12,7 @@ use FLV::VideoTag;
 use English qw(-no_match_vars);
 use Carp;
 
-our $VERSION = '0.10';
+our $VERSION = '0.11';
 
 =for stopwords SWF transcodes framerate
 
@@ -57,7 +57,7 @@ sub new
    my $pkg = shift;
 
    my $self = bless {
-      flv => FLV::File->new(),
+      flv              => FLV::File->new(),
       background_color => [0,0,0], # RGB, black
    }, $pkg;
    $self->{flv}->empty();
@@ -74,7 +74,7 @@ framerate, video dimensions, etc.
 
 sub parse_flv
 {
-   my $self = shift;
+   my $self   = shift;
    my $infile = shift;
 
    $self->{flv}->parse($infile);
@@ -98,7 +98,7 @@ C<parse_flv()>.  Throws an exception upon error.
 
 sub save
 {
-   my $self = shift;
+   my $self    = shift;
    my $outfile = shift;
 
    # Collect FLV info
@@ -112,10 +112,22 @@ sub save
    for my $i (0 .. $#{$flvinfo->{vidtags}})
    {
       my $vidtag = $flvinfo->{vidtags}->[$i];
+      my $data = $vidtag->{data};
+      if ($vidtag->{codec} == 4 || $vidtag->{codec} == 5)
+      {
+         # On2 VP6 is different in FLV vs. SWF!
+         $data =~ s/\A(.)//xms;
+         my $adjustment = $1;
+         if ($adjustment ne pack 'C', 0)
+         {
+            warn 'This FLV has a non-zero video size adjustment. ' .
+                "It may not play properly as a SWF...\n";
+         }
+      }
       SWF::Element::Tag::VideoFrame->new(
          StreamID  => 1,
          FrameNum  => $i,
-         VideoData => $vidtag->{data},
+         VideoData => $data,
       )->pack($swf);
 
       SWF::Element::Tag::PlaceObject2->new(
@@ -150,11 +162,11 @@ sub save
 
 sub _add_audio
 {
-   my $self = shift;
-   my $swf = shift;
+   my $self    = shift;
+   my $swf     = shift;
    my $flvinfo = shift;
-   my $start = shift;
-   my $islast = shift;
+   my $start   = shift;
+   my $islast  = shift;
 
    if (@{$flvinfo->{audtags}})
    {
@@ -176,24 +188,24 @@ sub _add_audio
       my $needsamples  = int 0.001 * $start * $rate;
       my $startsamples = $self->{audsamples};
 
-      #print "start, $self->{audsamples} vs. $needsamples\n";
       while (@{$flvinfo->{audtags}} && ($islast || $self->{audsamples} < $needsamples))
       {
          my $atag = shift @{$flvinfo->{audtags}};
          $data .= $atag->{data};
-         $self->{audsamples} = $self->_round_to_samples(@{$flvinfo->{audtags}} ?
-                                                        0.001 * $flvinfo->{audtags}->[0]->{start} * $rate :
-                                                        1_000_000_000);
+         $self->{audsamples}
+             = $self->_round_to_samples(@{$flvinfo->{audtags}} ?
+                                        0.001 * $flvinfo->{audtags}->[0]->{start} * $rate :
+                                        1_000_000_000);
       }
       if (0 < length $data)
       {
          my $samples = $self->{audsamples} - $startsamples;
-         
+
          my $seek = $startsamples ? int $needsamples - $startsamples : 0;
-         #print "frame $i, samples $samples, seek $seek, length ".(4 + length $data)."\n";
+
          # signed -> unsigned conversion
          $seek = unpack 'S', pack 's', $seek;
-         
+
          my $head = pack 'vv', $samples, $seek;
          SWF::Element::Tag::SoundStreamBlock->new(
             StreamSoundData => $head.$data,
@@ -208,16 +220,16 @@ sub _flvinfo
    my $self = shift;
 
    my %flvinfo = (
-      duration => $self->{flv}->get_meta('duration') || 0,
-      vcodec => $self->{flv}->get_meta('videocodecid') || 0,
-      acodec => $self->{flv}->get_meta('audiocodecid') || 0,
-      width => $self->{flv}->get_meta('width') || 320,
-      height => $self->{flv}->get_meta('height') || 240,
-      framerate => $self->{flv}->get_meta('framerate') || 12,
-      vidbytes => 0,
-      audbytes => 0,
-      vidtags => [],
-      audtags => [],
+      duration  => $self->{flv}->get_meta('duration')     || 0,
+      vcodec    => $self->{flv}->get_meta('videocodecid') || 0,
+      acodec    => $self->{flv}->get_meta('audiocodecid') || 0,
+      width     => $self->{flv}->get_meta('width')        || 320,
+      height    => $self->{flv}->get_meta('height')       || 240,
+      framerate => $self->{flv}->get_meta('framerate')    || 12,
+      vidbytes  => 0,
+      audbytes  => 0,
+      vidtags   => [],
+      audtags   => [],
    );
    $flvinfo{swfversion} = $flvinfo{vcodec} >= 4 ? 8 : 6;
 
@@ -243,14 +255,15 @@ sub _flvinfo
 
 sub _startswf
 {
-   my $self = shift;
+   my $self    = shift;
    my $flvinfo = shift;
 
    # SWF header
+   my $twp = 20;   # 20 twips per pixel
    my $swf = SWF::File->new(
       undef,
       Version   => $flvinfo->{swfversion},
-      FrameSize => [0, 0, 20 * $flvinfo->{width}, 20 * $flvinfo->{height}],  # 20 twips per pixel
+      FrameSize => [0, 0, $twp * $flvinfo->{width}, $twp * $flvinfo->{height}],
       FrameRate => $flvinfo->{framerate},
    );
 
@@ -292,7 +305,7 @@ sub _startswf
          NumFrames   => scalar @{$flvinfo->{vidtags}},
          Width       => $flvinfo->{width},
          Height      => $flvinfo->{height},
-         VideoFlags  => 1,  # Smoothing on
+         VideoFlags  => 1,                               # Smoothing on
          CodecID     => $tag->{codec},
       )->pack($swf);
    }
@@ -303,8 +316,8 @@ sub _startswf
 sub _round_to_samples
 {
    my $pkg_or_self = shift;
-   my $samples = shift;
-   
+   my $samples     = shift;
+
    return 576 * int $samples / 576 + 0.5;
 }
 

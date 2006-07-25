@@ -3,7 +3,7 @@ package FLV::Base;
 use warnings;
 use strict;
 
-our $VERSION = '0.10';
+our $VERSION = '0.11';
 
 my $verbose = 0;
 
@@ -22,20 +22,6 @@ under the same terms as Perl itself.
 
 =over
 
-=item $pkg->set_verbosity($boolean)
-
-Changes the global verbose flag.  This controls whether debug() emits
-messages or not.
-
-=cut
-
-sub set_verbosity
-{
-   my $pkg = shift;
-   $verbose = shift;
-   return;
-}
-
 =item $pkg->new()
 
 Creates a new, generic instance.
@@ -46,30 +32,6 @@ sub new
 {
    my $pkg = shift;
    return bless {}, $pkg;
-}
-
-=item $pkg->debug($msg)
-
-=item $self->debug($msg)
-
-Print the message to STDERR if the verbose flag is set to true.
-
-=cut
-
-sub debug
-{
-   return if (!$verbose);
-
-   my $pkg_or_self = shift;
-   my $msg  = shift;
-
-   if ($msg !~ m/\n \z/xms)
-   {
-      $msg .= "\n";
-   }
-
-   print {*STDERR} $msg;
-   return;
 }
 
 # utility method called by sub class get_info() methods
@@ -86,14 +48,12 @@ sub debug
 sub _get_info
 {
    my $pkg    = shift;
-   my $prefix = shift; # string
-   my $fields = shift; # hashref
-   my $tags   = shift; # arrayref
+   my $prefix = shift;    # string
+   my $fields = shift;    # hashref
+   my $tags   = shift;    # arrayref
 
-   my %info = (
-      count => scalar @{$tags},
-   );
-   my %types = map {$_ => {}} keys %{$fields};
+   my %info = (count => scalar @{$tags});
+   my %types = map { $_ => {} } keys %{$fields};
    for my $tag (@{$tags})
    {
       for my $field (keys %{$fields})
@@ -107,15 +67,16 @@ sub _get_info
    for my $field (keys %{$fields})
    {
       my $counts = $types{$field};
-      my @list = reverse sort {$counts->{$a} <=> $counts->{$b} || $a cmp $b} keys %{$counts};
+      my @list = reverse sort { $counts->{$a} <=> $counts->{$b} || $a cmp $b }
+          keys %{$counts};
       my $lookup = $fields->{$field};
       if ($lookup)
       {
-         @list = map {$lookup->{$_}} @list;
+         @list = map { $lookup->{$_} } @list;
       }
       $info{$field} = join q{/}, @list;
    }
-   return map {$prefix.q{_}.$_ => $info{$_}} keys %info;
+   return map { $prefix . q{_} . $_ => $info{$_} } keys %info;
 }
 
 1;

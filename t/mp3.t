@@ -5,7 +5,7 @@ use strict;
 use File::Temp qw(tempfile);
 use File::Spec;
 use Digest::MD5 qw(md5_hex);
-use Test::More tests => 5 + 1 * 1; # general tests + number of samples * test per sample
+use Test::More tests => 5 + 2 * 1; # general tests + number of samples * test per sample
 
 BEGIN
 {
@@ -15,6 +15,10 @@ BEGIN
 my @samples = (
    {
       flvfile => File::Spec->catfile('t', 'samples', 'flash6.flv'),
+      outsize => 119118,
+   },
+   {
+      flvfile => File::Spec->catfile('t', 'samples', 'flash8.flv'),
       outsize => 119118,
    },
 );

@@ -4,17 +4,17 @@ use warnings;
 use strict;
 use base 'Exporter';
 
-our $VERSION = '0.10';
+our $VERSION = '0.11';
 
-our @EXPORT = ## no critic(Modules::ProhibitAutomaticExportation)
+our @EXPORT =    ## no critic(Modules::ProhibitAutomaticExportation)
     qw(
-   %TAG_CLASSES
-   %AUDIO_FORMATS
-   %AUDIO_RATES
-   %AUDIO_SIZES
-   %AUDIO_TYPES
-   %VIDEO_CODEC_IDS
-   %VIDEO_FRAME_TYPES
+    %TAG_CLASSES
+    %AUDIO_FORMATS
+    %AUDIO_RATES
+    %AUDIO_SIZES
+    %AUDIO_TYPES
+    %VIDEO_CODEC_IDS
+    %VIDEO_FRAME_TYPES
 );
 
 our %TAG_CLASSES = (
@@ -49,6 +49,8 @@ our %VIDEO_CODEC_IDS = (
    2 => 'Sorenson H.263',
    3 => 'Screen video',
    4 => 'On2 VP6',
+   5 => 'On2 VP6 + alpha',
+   6 => 'Screen video v2',
 );
 our %VIDEO_FRAME_TYPES = (
    1 => 'keyframe',

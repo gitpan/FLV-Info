@@ -6,7 +6,7 @@ use Carp;
 
 use base 'FLV::Base';
 
-our $VERSION = '0.10';
+our $VERSION = '0.11';
 
 =for stopwords FLVTool2
 
@@ -46,24 +46,25 @@ sub parse
    my $content = $file->get_bytes(9);
    my ($signature, $version, $flags, $offset) = unpack 'A3CCN', $content;
 
-   $self->debug("Signature: $signature, version: $version, ".
-                "flags: $flags, offset: $offset");
-
    if ($signature ne 'FLV')
    {
-      die 'Not an FLV file at byte '.$file->get_pos(-9);
+      die 'Not an FLV file at byte ' . $file->get_pos(-9);
    }
+
    if ($version != 1)
    {
-      die 'Internal error: I only understand FLV version 1'
+      die 'Internal error: I only understand FLV version 1';
    }
-   if (0 != ($flags & 0xfa))
+
+   #if (0 != ($flags & 0xfa))
+   if (0 != ($flags & 0xf0))
    {
-      die 'Reserved header flags are non-zero at byte '.$file->get_pos(-5);
+      die 'Reserved header flags are non-zero at byte ' . $file->get_pos(-5);
    }
+
    if ($offset < 9)
    {
-      die 'Illegal value for body offset at byte '.$file->get_pos(-4);
+      die 'Illegal value for body offset at byte ' . $file->get_pos(-4);
    }
 
    $self->{has_audio} = $flags & 0x04 ? 1 : undef;
@@ -72,7 +73,7 @@ sub parse
    # Seek ahead in file
    if ($offset > 9)
    {
-      $file->get_bytes($offset-9);
+      $file->get_bytes($offset - 9);
    }
 
    return;
@@ -88,7 +89,7 @@ indicating whether writing to the file handle was successful.
 
 sub serialize
 {
-   my $self = shift;
+   my $self       = shift;
    my $filehandle = shift || croak 'Please specify a filehandle';
 
    my $flags = ($self->{has_audio} ? 0x04 : 0)

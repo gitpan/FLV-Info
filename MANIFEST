@@ -18,7 +18,7 @@ lib/FLV/Info.pm
 lib/FLV/MetaTag.pm
 lib/FLV/Tag.pm
 lib/FLV/ToMP3.pm
-lib/FLV/ToSwf.pm
+lib/FLV/ToSWF.pm
 lib/FLV/VideoTag.pm
 LICENSE
 Makefile.PL

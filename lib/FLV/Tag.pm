@@ -12,7 +12,7 @@ use FLV::AudioTag;
 use FLV::VideoTag;
 use FLV::MetaTag;
 
-our $VERSION = '0.10';
+our $VERSION = '0.11';
 
 =for stopwords subtag
 
@@ -53,30 +53,23 @@ sub parse
    my $file = shift;
 
    my $content = $file->get_bytes(11);
-
    
    my ($type, @datasize, @timestamp, $reserved);
    ($type, $datasize[0], $datasize[1], $datasize[2],
-    $timestamp[0], $timestamp[1], $timestamp[2], $reserved)
+    $timestamp[1], $timestamp[2], $timestamp[3], $timestamp[0])
        = unpack 'CCCCCCCV', $content;
 
-   $self->debug("tag type: $type, size: $datasize[0]+$datasize[1]+$datasize[2], " .
-                "time: $timestamp[0]/$timestamp[1]/$timestamp[2]");
-
    my $datasize  = ($datasize[0]  * 256 + $datasize[1])  * 256 + $datasize[2];
-   my $timestamp = ($timestamp[0] * 256 + $timestamp[1]) * 256 + $timestamp[2];
+   my $timestamp
+       = (($timestamp[0] * 256 + $timestamp[1]) * 256 + $timestamp[2]) * 256 + $timestamp[3];
 
    if ($datasize < 11)
    {
-      die 'Tag size is too small at byte '.$file->get_pos(-10);
-   }
-   if ($reserved)
-   {
-      die 'Reserved fields are non-zero at byte '.$file->get_pos(-4);
+      die 'Tag size is too small at byte ' . $file->get_pos(-10);
    }
 
    my $payload_class = $TAG_CLASSES{$type} 
-      or die 'Unknown tag type '.$type.' at byte '.$file->get_pos(-11);
+      or die 'Unknown tag type ' . $type . ' at byte ' . $file->get_pos(-11);
 
    $self->{payload} = $payload_class->new();
    $self->{payload}->{start} = $timestamp; # millisec
@@ -112,20 +105,27 @@ successful.
 sub serialize
 {
    my $pkg_or_self = shift;
-   my $tag = shift || croak 'Please specify a tag';
-   my $filehandle = shift || croak 'Please specify a filehandle';
+   my $tag         = shift || croak 'Please specify a tag';
+   my $filehandle  = shift || croak 'Please specify a filehandle';
 
    my $tag_type = {reverse %TAG_CLASSES}->{ref $tag} || die 'Unknown tag class ' . ref $tag;
    
-   #print STDERR "start $tag->{start} @{[ref $tag]}\n";
-   my @timestamp = ($tag->{start} >> 16 & 0xff, $tag->{start} >> 8 & 0xff, $tag->{start} & 0xff);
-   my $data = $tag->serialize();
+   my @timestamp = (
+      $tag->{start} >> 24 & 0xff,
+      $tag->{start} >> 16 & 0xff,
+      $tag->{start} >> 8 & 0xff,
+      $tag->{start} & 0xff,
+   );
+   my $data     = $tag->serialize();
    my $datasize = length $data;
-   my @datasize = ($datasize >> 16 & 0xff, $datasize >> 8 & 0xff, $datasize & 0xff);
-   #print STDERR "datasize: $datasize, @datasize\n";
+   my @datasize = (
+      $datasize >> 16 & 0xff,
+      $datasize >> 8 & 0xff,
+      $datasize & 0xff,
+   );
 
-   my $header = pack 'CCCCCCCV', $tag_type, @datasize, @timestamp, 0;
-   return if (! print {$filehandle} $header);
+   my $header = pack 'CCCCCCCV', $tag_type, @datasize, @timestamp[1..3], $timestamp[0];
+   return if (!print {$filehandle} $header);
    return if (!print {$filehandle} $data);
    return 11 + $datasize;
 }

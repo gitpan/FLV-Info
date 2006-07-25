@@ -9,7 +9,7 @@ use FLV::AudioTag;
 use English qw(-no_match_vars);
 use Carp;
 
-our $VERSION = '0.10';
+our $VERSION = '0.11';
 
 =for stopwords MP3 transcodes framerate
 
@@ -68,7 +68,7 @@ Open and parse the specified FLV file.
 
 sub parse_flv
 {
-   my $self = shift;
+   my $self   = shift;
    my $infile = shift;
 
    $self->{flv}->parse($infile);
@@ -84,7 +84,7 @@ sub _validate
    my $self = shift;
 
    my $acodec = $self->{flv}->get_meta('audiocodecid');
-   if (! defined $acodec)
+   if (!defined $acodec)
    {
       die "No audio data found\n";
    }
@@ -104,7 +104,7 @@ C<parse_flv()>.  Throws an exception upon error.
 
 sub save
 {
-   my $self = shift;
+   my $self    = shift;
    my $outfile = shift;
 
    $self->_validate();
@@ -116,12 +116,13 @@ sub save
    }
    else
    {
-      open $outfh, '>', $outfile or die 'Failed to write MP3 file: '.$OS_ERROR;
+      open $outfh, '>', $outfile
+          or die 'Failed to write MP3 file: ' . $OS_ERROR;
    }
    binmode $outfh;
    for my $tag ($self->{flv}->{body}->get_tags())
    {
-      next if (! $tag->isa('FLV::AudioTag'));
+      next if (!$tag->isa('FLV::AudioTag'));
       print {$outfh} $tag->{data};
    }
    close $outfh;

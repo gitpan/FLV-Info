@@ -12,7 +12,7 @@ use FLV::AMFReader;
 use FLV::AMFWriter;
 use FLV::Constants;
 
-our $VERSION = '0.10';
+our $VERSION = '0.11';
 
 =for stopwords FLVTool2 AMF
 
@@ -56,23 +56,14 @@ The majority of the work is done by FLV::AMFReader.
 
 sub parse
 {
-   my $self = shift;
-   my $file = shift;
+   my $self     = shift;
+   my $file     = shift;
    my $datasize = shift;
 
    my $content = $file->get_bytes($datasize);
-
-   #print STDERR "\n", map({sprintf '%02x', $_} unpack 'C*', $content), "\n";
-
-   my @data = FLV::AMFReader->new($content)->read_flv_meta();
-
-   #use File::Slurp;
-   #write_file 'meta.txt', $content;
-   #use Data::Dumper;
-   #write_file 'meta.dump', Dumper(\@data);
+   my @data    = FLV::AMFReader->new($content)->read_flv_meta();
 
    $self->{data} = \@data;
-
    return;
 }
 
@@ -88,7 +79,6 @@ sub serialize
    my $self = shift;
 
    my $content = FLV::AMFWriter->new()->write_flv_meta(@{$self->{data}});
-   #print STDERR "\n", map({sprintf '%02x', $_} unpack 'C*', $content), "\n";
    return $content;
 }
 
@@ -100,7 +90,7 @@ Returns a hash of FLV metadata.  See File::Info for more details.
 
 sub get_info
 {
-   my $pkg = shift;
+   my $pkg  = shift;
    my %info = $pkg->_get_info('meta', {}, \@_);
    if (@_ == 1)
    {
@@ -135,7 +125,7 @@ hash.
 sub get_value
 {
    my $self = shift;
-   my $key = shift;
+   my $key  = shift;
 
    return if (!$self->{data});
    return if (@{$self->{data}} != 2);
@@ -144,8 +134,8 @@ sub get_value
 
 sub set_value
 {
-   my $self = shift;
-   my $key = shift;
+   my $self  = shift;
+   my $key   = shift;
    my $value = shift;
 
    $self->{data} ||= ['onMetaData', {}];
