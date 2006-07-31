@@ -12,7 +12,7 @@ use FLV::VideoTag;
 use English qw(-no_match_vars);
 use Carp;
 
-our $VERSION = '0.11';
+our $VERSION = '0.12';
 
 =for stopwords SWF transcodes framerate
 

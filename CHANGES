@@ -1,5 +1,9 @@
 Revision history for Perl module FLV::Info
 
+0.12  31 Jul 2006
+      [FIXES]
+      - Remove spurious "use Readonly;" from a few files.  D'oh.
+
 0.11  25 Jul 2006
       [ENHANCEMENTS]
       - Better support for Flash 8 FLV and SWF

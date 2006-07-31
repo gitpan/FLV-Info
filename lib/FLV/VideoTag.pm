@@ -4,13 +4,12 @@ use warnings;
 use strict;
 use Carp;
 use English qw(-no_match_vars);
-use Readonly;
 
 use base 'FLV::Base';
 
 use FLV::Constants;
 
-our $VERSION = '0.11';
+our $VERSION = '0.12';
 
 =for stopwords codec
 
