@@ -13,7 +13,7 @@ use FLV::VideoTag;
 use English qw(-no_match_vars);
 use Carp;
 
-our $VERSION = '0.12';
+our $VERSION = '0.13';
 
 =for stopwords SWF transcodes
 
@@ -59,7 +59,6 @@ sub new
 
    my $self = bless {
       flv => FLV::File->new(),
-      audio_skipframes => 1,
    }, $pkg;
    $self->{flv}->empty();
    $self->{flv}->set_meta(canSeekToEnd => 1);
@@ -210,8 +209,12 @@ sub _audio_block
    my $stream = shift;
    my $length = shift;
 
-   return if (!$length);    # empty block
-
+   if ($length == 0)    # empty block
+   {
+      warn 'Skipping empty audio block';
+      return;
+   }
+   
    my $audiotag = FLV::AudioTag->new();
 
    # time calculation will be redone for MP3...
@@ -224,6 +227,12 @@ sub _audio_block
 
    if ($self->{audiocodec} == 2)
    {
+      if ($length == 4)    # empty block
+      {
+         warn 'Skipping empty audio block';
+         return;
+      }
+
       my ($samples) = unpack 'v', $stream->get_string(2);
 
       my ($seek) = unpack 'v', $stream->get_string(2);
@@ -235,11 +244,19 @@ sub _audio_block
       (my $rate = $AUDIO_RATES{$self->{audiorate}}) =~ s/\D//gxms;
       if ($self->{samples} == 0)
       {
-         $self->{samples}
-             = $rate * ($self->{framenumber} - $self->{audio_skipframes}) /
-               $self->{header}->{rate};
+         my $frame = $self->{framenumber};
+         if ($frame == 1)
+         {
+            # Often audio skips one frame.  This is true for On2 SWFs, but not Sorenson.
+            $frame = 0;
+         }
+         $self->{samples} = $rate * $frame / $self->{header}->{rate};
       }
       $millisec = 1000 * $self->{samples} / $rate;
+      if ($millisec > 4_000_000_000 || $millisec < 0)
+      {
+         warn "Funny output timestamp: $millisec ($self->{samples}, $samples, $rate)";
+      }
       $self->{samples} += $samples;
    }
    else
@@ -285,6 +302,12 @@ sub _video_frame
    my $stream = shift;
    my $length = shift;
 
+   if ($length == 0)    # empty block
+   {
+      warn 'Skipping empty video block';
+      return;
+   }
+   
    my ($streamid, $framenum) = unpack 'vv', $stream->get_string(4);
    return if ($self->{streamid} != $streamid);
    my $videotag = FLV::VideoTag->new();

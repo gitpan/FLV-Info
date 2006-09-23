@@ -48,6 +48,7 @@ for my $sample (@samples)
    $converter->parse_flv($sample->{flvfile});
    # Write the MP3 back out as a temp file
    my ($fh, $tempmp3) = tempfile();
+   die if (! -f $tempmp3);
    push @cleanup, $tempmp3;
    close $fh;
    $converter->save($tempmp3);

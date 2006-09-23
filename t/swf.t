@@ -51,6 +51,7 @@ for my $sample (@samples)
 
    # Write the FLV back out as a temp file
    my ($fh, $tempfilename) = tempfile();
+   die if (! -f $tempfilename);
    push @cleanup, $tempfilename;
    close $fh;
    $converter->save($tempfilename);
@@ -119,6 +120,7 @@ for my $sample (@samples)
    my $origflv = $converter->{flv};
    # Write the SWF back out as a temp file
    my ($fh, $tempswf) = tempfile();
+   die if (! -f $tempswf);
    push @cleanup, $tempswf;
    close $fh;
    $converter->save($tempswf);

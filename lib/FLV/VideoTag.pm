@@ -9,7 +9,7 @@ use base 'FLV::Base';
 
 use FLV::Constants;
 
-our $VERSION = '0.12';
+our $VERSION = '0.13';
 
 =for stopwords codec
 
@@ -115,7 +115,7 @@ sub _parse_h263
    }
    elsif ($type != $self->{type})
    {
-      die "Type mismatch: header says $VIDEO_FRAME_TYPES{$self->{type}}, " .
+      warn "Type mismatch: header says $VIDEO_FRAME_TYPES{$self->{type}}, " .
           "data says $VIDEO_FRAME_TYPES{$type}";
    }
 

@@ -56,12 +56,14 @@ my @cleanup;
    like($@, qr/No such file or directory/, 'parse non-existent file');
 
    my ($fh, $tempfilename) = tempfile();
+   die if (! -f $tempfilename);
    push @cleanup, $tempfilename;
    close $fh;
    eval { $reader->parse($tempfilename); };
    like($@, qr/Unexpected end of file/, 'parse empty file');
 
    ($fh, $tempfilename) = tempfile();
+   die if (! -f $tempfilename);
    push @cleanup, $tempfilename;
    print {$fh} 'foo';
    close $fh;
@@ -69,6 +71,7 @@ my @cleanup;
    like($@, qr/Unexpected end of file/, 'parse non-flv file');
 
    ($fh, $tempfilename) = tempfile();
+   die if (! -f $tempfilename);
    push @cleanup, $tempfilename;
    print {$fh} 'FLV';
    close $fh;
@@ -76,6 +79,7 @@ my @cleanup;
    like($@, qr/Unexpected end of file/, 'parse non-flv file');
 
    ($fh, $tempfilename) = tempfile();
+   die if (! -f $tempfilename);
    push @cleanup, $tempfilename;
    print {$fh} 'foo' x 1000;
    close $fh;
@@ -83,6 +87,7 @@ my @cleanup;
    like($@, qr/Not an FLV file/, 'parse long non-flv file');
 
    ($fh, $tempfilename) = tempfile();
+   die if (! -f $tempfilename);
    push @cleanup, $tempfilename;
    print {$fh} 'FLV'.pack 'CCN', 200, 0, 9;
    close $fh;
@@ -90,6 +95,7 @@ my @cleanup;
    like($@, qr/only understand FLV version 1/, 'parse badly versioned flv header');
 
    ($fh, $tempfilename) = tempfile();
+   die if (! -f $tempfilename);
    push @cleanup, $tempfilename;
    print {$fh} 'FLV'.pack 'CCN', 1, 128, 9;
    close $fh;
@@ -97,6 +103,7 @@ my @cleanup;
    like($@, qr/Reserved header flags are non-zero/, 'parse reserved-flag using flv header');
 
    ($fh, $tempfilename) = tempfile();
+   die if (! -f $tempfilename);
    push @cleanup, $tempfilename;
    print {$fh} 'FLV'.pack 'CCN', 1, 0, 8;
    close $fh;
@@ -104,6 +111,7 @@ my @cleanup;
    like($@, qr/Illegal value for body offset/, 'parse too-small length flv header');
 
    ($fh, $tempfilename) = tempfile();
+   die if (! -f $tempfilename);
    push @cleanup, $tempfilename;
    print {$fh} 'FLV'.pack 'CCNC', 1, 0, 10, 0;
    close $fh;
@@ -151,6 +159,7 @@ for my $sample (@samples)
 
    # Write the FLV back out as a temp file
    my ($fh, $tempfilename) = tempfile();
+   die if (! -f $tempfilename);
    push @cleanup, $tempfilename;
    ok($flv->serialize($fh), 'serialize');
    close $fh;

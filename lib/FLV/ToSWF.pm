@@ -12,7 +12,7 @@ use FLV::VideoTag;
 use English qw(-no_match_vars);
 use Carp;
 
-our $VERSION = '0.12';
+our $VERSION = '0.13';
 
 =for stopwords SWF transcodes framerate
 
@@ -116,9 +116,7 @@ sub save
       if ($vidtag->{codec} == 4 || $vidtag->{codec} == 5)
       {
          # On2 VP6 is different in FLV vs. SWF!
-         $data =~ s/\A(.)//xms;
-         my $adjustment = $1;
-         if ($adjustment ne pack 'C', 0)
+         if ($data !~ s/\A(.)//xms || $1 ne pack 'C', 0)
          {
             warn 'This FLV has a non-zero video size adjustment. ' .
                 "It may not play properly as a SWF...\n";

@@ -12,7 +12,7 @@ use FLV::AudioTag;
 use FLV::VideoTag;
 use FLV::MetaTag;
 
-our $VERSION = '0.12';
+our $VERSION = '0.13';
 
 =for stopwords subtag
 
@@ -63,9 +63,14 @@ sub parse
    my $timestamp
        = (($timestamp[0] * 256 + $timestamp[1]) * 256 + $timestamp[2]) * 256 + $timestamp[3];
 
+   if ($timestamp > 4_000_000_000 || $timestamp < 0)
+   {
+      warn "Funny timestamp: @timestamp -> $timestamp\n";
+   }
+
    if ($datasize < 11)
    {
-      die 'Tag size is too small at byte ' . $file->get_pos(-10);
+      die 'Tag size is too small ('.$datasize.') at byte ' . $file->get_pos(-10);
    }
 
    my $payload_class = $TAG_CLASSES{$type} 

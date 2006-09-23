@@ -9,8 +9,9 @@ use base 'FLV::Base';
 use FLV::Header;
 use FLV::Body;
 use FLV::MetaTag;
+use FLV::Constants;
 
-our $VERSION = '0.12';
+our $VERSION = '0.13';
 
 =head1 NAME
 
@@ -107,7 +108,7 @@ Fill in various C<onMetadata> fields if they are not already present.
 
 =cut
 
-sub populate_meta
+sub populate_meta   ## no critic(ProhibitExcessComplexity)
 {
    my $self = shift;
 
@@ -117,6 +118,7 @@ sub populate_meta
       vidbytes => 0,
       audbytes => 0,
       lasttime => 0,
+      keyframetimes => [],
    );
 
    my $invalid = '-1';
@@ -136,12 +138,16 @@ sub populate_meta
             $info{'vid'.$key} = defined $info{'vid'.$key} && $tag->{$key} != $info{'vid'.$key} ?
                 $invalid : $tag->{$key};
          }
+         if ($tag->{type} == 1) # keyframe
+         {
+            push @{$info{keyframetimes}}, $time;
+         }
       }
       elsif ($tag->isa('FLV::AudioTag'))
       {
          $info{audtags}++;
          $info{audbytes} += length $tag->{data};
-         for my $key (qw(format codec type size))
+         for my $key (qw(format rate codec type size))
          {
             $info{'aud'.$key} = defined $info{'aud'.$key} && $tag->{$key} != $info{'aud'.$key} ?
                 $invalid : $tag->{$key};
@@ -151,18 +157,32 @@ sub populate_meta
    my $duration
        = $info{vidtags} > 1 ? $info{lasttime} * $info{vidtags} / ($info{vidtags} - 1) : 0;
 
+   my $audrate = defined $info{audrate} && $info{audrate} ne $invalid ? $AUDIO_RATES{$info{audrate}} : 0;
+   $audrate =~ s/\D//gxms;
+
    my %meta = (
       canSeekToEnd  => 1,
       $duration > 0 ? (
          duration      => $duration,
-         videodatarate => $info{vidbytes} * 8 / (1024 * $duration), # kbps
-         audiodatarate => $info{audbytes} * 8 / (1024 * $duration), # kbps
-         framerate     => $info{vidtags}/$duration,
+         $info{vidbytes} ? (
+            videodatarate => $info{vidbytes} * 8 / (1024 * $duration), # kbps
+            framerate     => $info{vidtags}/$duration,
+            videosize     => $info{vidbytes},
+         ) : (),
+         $info{audbytes} ? (
+            audiodatarate   => $info{audbytes} * 8 / (1024 * $duration), # kbps
+            audiosize       => $info{audbytes},
+         ) : (),
       ) : (),
+      $audrate ? (audiosamplerate  => $audrate) : (),
       defined $info{audcodec} && $info{audcodec} ne $invalid ? (audiocodecid  => $info{audcodec}) : (),
       defined $info{vidcodec} && $info{vidcodec} ne $invalid ? (videocodecid  => $info{vidcodec}) : (),
       defined $info{vidwidth} && $info{vidwidth} ne $invalid ? (width  => $info{vidwidth}) : (),
       defined $info{vidheight} && $info{vidheight} ne $invalid ? (height  => $info{vidheight}) : (),
+      defined $info{lasttime} ? (lasttimestamp => $info{lasttime}) : (),
+      @{$info{keyframetimes}} ? (keyframes => {times => $info{keyframetimes}}) : (),
+      metadatacreator => __PACKAGE__ . " v$VERSION",
+      metadatadate => scalar gmtime,
    );
 
    for my $key (keys %meta)
