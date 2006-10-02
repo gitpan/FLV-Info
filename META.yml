@@ -1,6 +1,6 @@
 ---
 name: FLV-Info
-version: 0.13
+version: 0.14
 author:
   - 'Clotho Advanced Media, Inc. <cpan@clotho.com>'
 abstract: Extract metadata from Macromedia Flash Video files
@@ -17,49 +17,49 @@ build_requires:
 provides:
   FLV::AMFReader:
     file: lib/FLV/AMFReader.pm
-    version: 0.13
+    version: 0.14
   FLV::AMFWriter:
     file: lib/FLV/AMFWriter.pm
-    version: 0.13
+    version: 0.14
   FLV::AudioTag:
     file: lib/FLV/AudioTag.pm
-    version: 0.13
+    version: 0.14
   FLV::Base:
     file: lib/FLV/Base.pm
-    version: 0.13
+    version: 0.14
   FLV::Body:
     file: lib/FLV/Body.pm
-    version: 0.13
+    version: 0.14
   FLV::Constants:
     file: lib/FLV/Constants.pm
-    version: 0.13
+    version: 0.14
   FLV::File:
     file: lib/FLV/File.pm
-    version: 0.13
+    version: 0.14
   FLV::FromSWF:
     file: lib/FLV/FromSWF.pm
-    version: 0.13
+    version: 0.14
   FLV::Header:
     file: lib/FLV/Header.pm
-    version: 0.13
+    version: 0.14
   FLV::Info:
     file: lib/FLV/Info.pm
-    version: 0.13
+    version: 0.14
   FLV::MetaTag:
     file: lib/FLV/MetaTag.pm
-    version: 0.13
+    version: 0.14
   FLV::Tag:
     file: lib/FLV/Tag.pm
-    version: 0.13
+    version: 0.14
   FLV::ToMP3:
     file: lib/FLV/ToMP3.pm
-    version: 0.13
+    version: 0.14
   FLV::ToSWF:
     file: lib/FLV/ToSWF.pm
-    version: 0.13
+    version: 0.14
   FLV::VideoTag:
     file: lib/FLV/VideoTag.pm
-    version: 0.13
+    version: 0.14
 generated_by: Module::Build version 0.2805
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.2.html

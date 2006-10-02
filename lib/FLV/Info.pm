@@ -6,7 +6,7 @@ use List::Util qw(max);
 
 use FLV::File;
 
-our $VERSION = '0.13';
+our $VERSION = '0.14';
 
 =for stopwords FLVTool2 interframes keyframes
 

@@ -1,9 +1,16 @@
 Revision history for Perl module FLV::Info
 
+0.14  02 Oct 2006
+      [FIXES]
+      - Little endian extended timestamp support
+        (broken code worked on big endian by coincidence!)
+        Thanks to Alex Ciornii for smoking out the bug
+
 0.13  23 Sep 2006
       [FIXES]
       - Support for Sorenson SWFs -> FLV
       [ENHANCEMENTS]
+      - Support for FLV8 extended timestamps
       - Add more metadata fields
       - Add a few more warnings when reading screwy files
       - Undocumented --debug flag spews via Data::Dumper on parse failure

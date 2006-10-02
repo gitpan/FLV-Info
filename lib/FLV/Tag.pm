@@ -12,7 +12,7 @@ use FLV::AudioTag;
 use FLV::VideoTag;
 use FLV::MetaTag;
 
-our $VERSION = '0.13';
+our $VERSION = '0.14';
 
 =for stopwords subtag
 
@@ -57,7 +57,7 @@ sub parse
    my ($type, @datasize, @timestamp, $reserved);
    ($type, $datasize[0], $datasize[1], $datasize[2],
     $timestamp[1], $timestamp[2], $timestamp[3], $timestamp[0])
-       = unpack 'CCCCCCCV', $content;
+       = unpack 'CCCCCCCC', $content;
 
    my $datasize  = ($datasize[0]  * 256 + $datasize[1])  * 256 + $datasize[2];
    my $timestamp
@@ -129,7 +129,7 @@ sub serialize
       $datasize & 0xff,
    );
 
-   my $header = pack 'CCCCCCCV', $tag_type, @datasize, @timestamp[1..3], $timestamp[0];
+   my $header = pack 'CCCCCCCCCCC', $tag_type, @datasize, @timestamp[1..3], $timestamp[0], 0, 0, 0;
    return if (!print {$filehandle} $header);
    return if (!print {$filehandle} $data);
    return 11 + $datasize;
