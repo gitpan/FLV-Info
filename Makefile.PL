@@ -6,6 +6,7 @@ WriteMakefile
           'INSTALLDIRS' => 'site',
           'NAME' => 'FLV::Info',
           'EXE_FILES' => [
+                           'bin/flv2flv',
                            'bin/flv2mp3',
                            'bin/flv2swf',
                            'bin/flvinfo',

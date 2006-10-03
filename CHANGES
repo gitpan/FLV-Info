@@ -1,5 +1,10 @@
 Revision history for Perl module FLV::Info
 
+0.15  03 Oct 2006
+      [ENHANCEMENTS]
+      - Added bin/flv2flv metadata injector
+        Suggested by Stephen Jungels
+
 0.14  02 Oct 2006
       [FIXES]
       - Little endian extended timestamp support
