@@ -11,7 +11,7 @@ use FLV::AMFReader;
 use FLV::AMFWriter;
 use FLV::Constants;
 
-our $VERSION = '0.15';
+our $VERSION = '0.16';
 
 =for stopwords FLVTool2 AMF
 
@@ -83,7 +83,7 @@ sub serialize
 
 =item $self->get_info()
 
-Returns a hash of FLV metadata.  See File::Info for more details.
+Returns a hash of FLV metadata.  See FLV::Info for more details.
 
 =cut
 

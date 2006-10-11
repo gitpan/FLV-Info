@@ -3,10 +3,11 @@ package FLV::Info;
 use warnings;
 use strict;
 use List::Util qw(max);
+use Data::Dumper;
 
 use FLV::File;
 
-our $VERSION = '0.15';
+our $VERSION = '0.16';
 
 =for stopwords FLVTool2 interframes keyframes
 
@@ -208,6 +209,19 @@ sub report
       if ($output->{u})
       {
          $value .= q{ } . $output->{u} . ($value eq '1' ? q{} : 's');
+      }
+      elsif (ref $value)
+      {
+         # Make multiline output for a complex data structure
+         my $d = Data::Dumper->new([$value], ['VAR']);
+         (my $label = $output->{l}) =~ s/\S+/  >>>/xms;
+         my $varprefix = '$VAR = '; ##no critic(RequireInterpolationOfMetachars)
+         # "+2" is for 2 spaces in normal output
+         my $padding = q{ } x ($max_label_length +2 - length $label.$varprefix);
+         $d->Pad($label . $padding);
+         $value = $d->Dump();
+         $value =~ s/\A\s*>>>\s*\Q$varprefix\E//xms;
+         $value =~ s/;\s+\z//xms;
       }
 
       my $label   = $output->{l};

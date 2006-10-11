@@ -1,5 +1,10 @@
 Revision history for Perl module FLV::Info
 
+0.16  11 Oct 2006
+      [FIXES]
+      - bin/flv2flv now actually works
+      - Better rendering for complex metadata FLV::Info
+
 0.15  03 Oct 2006
       [ENHANCEMENTS]
       - Added bin/flv2flv metadata injector

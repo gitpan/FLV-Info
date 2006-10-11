@@ -9,7 +9,7 @@ use base 'FLV::Base';
 
 use FLV::Constants;
 
-our $VERSION = '0.15';
+our $VERSION = '0.16';
 
 =head1 NAME
 
@@ -89,33 +89,20 @@ sub serialize
 
 =item $self->get_info()
 
-Returns a hash of FLV metadata.  See File::Info for more details.
+Returns a hash of FLV metadata.  See FLV::Info for more details.
 
 =cut
 
 sub get_info
 {
    my $pkg = shift;
-   return $pkg->_get_info('audio', {format => \%AUDIO_FORMATS,
-                                    rate   => \%AUDIO_RATES,
-                                    size   => \%AUDIO_SIZES,
-                                    type   => \%AUDIO_TYPES}, \@_);
+   return $pkg->_get_info('audio', {
+      format => \%AUDIO_FORMATS,
+      rate   => \%AUDIO_RATES,
+      size   => \%AUDIO_SIZES,
+      type   => \%AUDIO_TYPES,
+   }, \@_);
 }
-
-# sub get_duration
-# {
-#    my $self = shift;
-#
-#    # Doesn't work yet
-#
-#    my $bytes = length $self->{data};
-#    my $hz    = $self->{format} == 5 ? 8000
-#              : $self->{rate} == 0   ? 5512
-#              : $self->{rate} == 1   ? 11025
-#              : $self->{rate} == 2   ? 22050
-#              : $self->{rate} == 3   ? 44100
-#              : croak;
-# }
 
 1;
 

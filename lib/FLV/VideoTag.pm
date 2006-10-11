@@ -9,7 +9,7 @@ use base 'FLV::Base';
 
 use FLV::Constants;
 
-our $VERSION = '0.15';
+our $VERSION = '0.16';
 
 =for stopwords codec
 
@@ -189,7 +189,7 @@ sub serialize
 
 =item $self->get_info()
 
-Returns a hash of FLV metadata.  See File::Info for more details.
+Returns a hash of FLV metadata.  See FLV::Info for more details.
 
 =cut
 

@@ -9,7 +9,7 @@ use Pod::Usage;
 use English qw(-no_match_vars);
 use FLV::File;
 
-our $VERSION = '0.15';
+our $VERSION = '0.16';
 
 my %opts = (
    verbose    => 0,
@@ -41,7 +41,7 @@ my $infile = shift || q{-};
 my $outfile = shift || q{-};
 
 my $flv = FLV::File->new();
-$flv->parse($infile eq '-' ? \*STDIN : $infile) or die 'Failed to read FLV';
+$flv->parse($infile eq q{-} ? \*STDIN : $infile);
 $flv->populate_meta();
 my $outfh;
 if ($outfile eq q{-})

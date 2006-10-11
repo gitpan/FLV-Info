@@ -7,7 +7,7 @@ use AMF::Perl::Util::Object;
 use AMF::Perl::IO::OutputStream;
 use base 'AMF::Perl::IO::Serializer';
 
-our $VERSION = '0.15';
+our $VERSION = '0.16';
 
 =for stopwords AMF Remoting
 

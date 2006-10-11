@@ -4,7 +4,7 @@ use warnings;
 use strict;
 use base 'Exporter';
 
-our $VERSION = '0.15';
+our $VERSION = '0.16';
 
 our @EXPORT =    ## no critic(Modules::ProhibitAutomaticExportation)
     qw(

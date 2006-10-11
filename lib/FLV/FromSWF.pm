@@ -13,7 +13,7 @@ use FLV::VideoTag;
 use English qw(-no_match_vars);
 use Carp;
 
-our $VERSION = '0.15';
+our $VERSION = '0.16';
 
 =for stopwords SWF transcodes
 

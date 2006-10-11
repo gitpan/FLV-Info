@@ -3,7 +3,7 @@ package FLV::Base;
 use warnings;
 use strict;
 
-our $VERSION = '0.15';
+our $VERSION = '0.16';
 
 my $verbose = 0;
 
