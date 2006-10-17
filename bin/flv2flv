@@ -8,20 +8,22 @@ use Getopt::Long;
 use Pod::Usage;
 use English qw(-no_match_vars);
 use FLV::File;
+use FLV::Util;
 
-our $VERSION = '0.16';
+our $VERSION = '0.17';
 
 my %opts = (
-   verbose    => 0,
-   help       => 0,
-   version    => 0,
+   verbose => 0,
+   help    => 0,
+   version => 0,
 );
 
 Getopt::Long::Configure('bundling');
-GetOptions('v|verbose'      => \$opts{verbose},
-           'h|help'         => \$opts{help},
-           'V|version'      => \$opts{version},
-           ) or pod2usage(1);
+GetOptions(
+   'v|verbose' => \$opts{verbose},
+   'h|help'    => \$opts{help},
+   'V|version' => \$opts{version},
+) or pod2usage(1);
 if ($opts{help})
 {
    pod2usage(-exitstatus => 0, -verbose => 2);
@@ -37,22 +39,19 @@ if (@ARGV < 2)
    pod2usage(1);
 }
 
-my $infile = shift || q{-};
+my $infile  = shift || q{-};
 my $outfile = shift || q{-};
 
 my $flv = FLV::File->new();
 $flv->parse($infile eq q{-} ? \*STDIN : $infile);
 $flv->populate_meta();
-my $outfh;
-if ($outfile eq q{-})
+
+my $outfh = FLV::Util->get_write_filehandle($outfile);
+if (!$outfh)
 {
-   $outfh = \*STDOUT;
+   die 'Failed to write FLV: ' . $OS_ERROR;
 }
-else
-{
-   open $outfh, '>', $outfile or die 'Failed to write FLV: ' . $OS_ERROR;
-}
-binmode $outfh;
+
 $flv->set_meta(creationdate => scalar gmtime);
 if (!$flv->serialize($outfh))
 {

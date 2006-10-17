@@ -11,7 +11,6 @@ lib/FLV/AMFWriter.pm
 lib/FLV/AudioTag.pm
 lib/FLV/Base.pm
 lib/FLV/Body.pm
-lib/FLV/Constants.pm
 lib/FLV/File.pm
 lib/FLV/FromSWF.pm
 lib/FLV/Header.pm
@@ -20,6 +19,7 @@ lib/FLV/MetaTag.pm
 lib/FLV/Tag.pm
 lib/FLV/ToMP3.pm
 lib/FLV/ToSWF.pm
+lib/FLV/Util.pm
 lib/FLV/VideoTag.pm
 LICENSE
 Makefile.PL
@@ -27,6 +27,7 @@ MANIFEST			This list of files
 META.yml
 README
 t/flv.t
+t/flvmeta.t
 t/mp3.t
 t/pod-coverage.t
 t/pod.t

@@ -9,9 +9,9 @@ use base 'FLV::Base';
 use FLV::Header;
 use FLV::Body;
 use FLV::MetaTag;
-use FLV::Constants;
+use FLV::Util;
 
-our $VERSION = '0.16';
+our $VERSION = '0.17';
 
 =head1 NAME
 
@@ -64,6 +64,8 @@ sub parse
 {
    my $self  = shift;
    my $input = shift;
+   my $opts  = shift;
+   $opts ||= {};
 
    $self->{header}     = undef;
    $self->{body}       = undef;
@@ -71,8 +73,7 @@ sub parse
    $self->{filehandle} = undef;
    $self->{pos}        = 0;
 
-   eval
-   {
+   eval {
       if (ref $input)
       {
          $self->{filehandle} = $input;
@@ -86,17 +87,17 @@ sub parse
       }
 
       $self->{header} = FLV::Header->new();
-      $self->{header}->parse($self); # might throw exception
+      $self->{header}->parse($self);    # might throw exception
 
       $self->{body} = FLV::Body->new();
-      $self->{body}->parse($self);   # might throw exception
+      $self->{body}->parse($self, $opts);    # might throw exception
    };
    if ($EVAL_ERROR)
    {
       die 'Failed to read FLV file: ' . $EVAL_ERROR;
    }
 
-   $self->{filehandle} = undef;   # implicitly close the filehandle
+   $self->{filehandle} = undef;              # implicitly close the filehandle
    $self->{pos}        = 0;
 
    return;
@@ -108,16 +109,19 @@ Fill in various C<onMetadata> fields if they are not already present.
 
 =cut
 
-sub populate_meta   ## no critic(ProhibitExcessComplexity)
+sub populate_meta    ## no critic(ProhibitExcessComplexity)
 {
    my $self = shift;
 
+   $self->{body} ||= FLV::Body->new();
+   $self->{body}->merge_meta();
+
    my %info = (
-      vidtags  => 0,
-      audtags  => 0,
-      vidbytes => 0,
-      audbytes => 0,
-      lasttime => 0,
+      vidtags       => 0,
+      audtags       => 0,
+      vidbytes      => 0,
+      audbytes      => 0,
+      lasttime      => 0,
       keyframetimes => [],
    );
 
@@ -135,12 +139,18 @@ sub populate_meta   ## no critic(ProhibitExcessComplexity)
          }
          for my $key (qw(width height type codec))
          {
-            $info{'vid'.$key} = defined $info{'vid'.$key} && $tag->{$key} != $info{'vid'.$key} ?
-                $invalid : $tag->{$key};
+            if (!defined $info{ 'vid' . $key })
+            {
+               $info{ 'vid' . $key } = $tag->{$key};
+            }
+            elsif ($tag->{$key} != $info{ 'vid' . $key })
+            {
+               $info{ 'vid' . $key } = $invalid;
+            }
          }
-         if ($tag->{type} == 1) # keyframe
+         if ($tag->is_keyframe())
          {
-            push @{$info{keyframetimes}}, $time;
+            push @{ $info{keyframetimes} }, $time;
          }
       }
       elsif ($tag->isa('FLV::AudioTag'))
@@ -149,49 +159,82 @@ sub populate_meta   ## no critic(ProhibitExcessComplexity)
          $info{audbytes} += length $tag->{data};
          for my $key (qw(format rate codec type size))
          {
-            $info{'aud'.$key} = defined $info{'aud'.$key} && $tag->{$key} != $info{'aud'.$key} ?
-                $invalid : $tag->{$key};
+            if (!defined $info{ 'aud' . $key })
+            {
+               $info{ 'aud' . $key } = $tag->{$key};
+            }
+            elsif ($tag->{$key} != $info{ 'aud' . $key })
+            {
+               $info{ 'aud' . $key } = $invalid;
+            }
          }
       }
    }
-   my $duration
-       = $info{vidtags} > 1 ? $info{lasttime} * $info{vidtags} / ($info{vidtags} - 1) : 0;
+   my $duration =
+         $info{vidtags} > 1
+       ? $info{lasttime} * $info{vidtags} / ($info{vidtags} - 1)
+       : 0;
 
-   my $audrate = defined $info{audrate} && $info{audrate} ne $invalid ? $AUDIO_RATES{$info{audrate}} : 0;
+   my $audrate = defined $info{audrate}
+       && $info{audrate} ne $invalid ? $AUDIO_RATES{ $info{audrate} } : 0;
    $audrate =~ s/\D//gxms;
 
    my %meta = (
-      canSeekToEnd  => 1,
-      $duration > 0 ? (
-         duration      => $duration,
-         $info{vidbytes} ? (
-            videodatarate => $info{vidbytes} * 8 / (1024 * $duration), # kbps
-            framerate     => $info{vidtags}/$duration,
-            videosize     => $info{vidbytes},
-         ) : (),
-         $info{audbytes} ? (
-            audiodatarate   => $info{audbytes} * 8 / (1024 * $duration), # kbps
-            audiosize       => $info{audbytes},
-         ) : (),
-      ) : (),
-      $audrate ? (audiosamplerate  => $audrate) : (),
-      defined $info{audcodec} && $info{audcodec} ne $invalid ? (audiocodecid  => $info{audcodec}) : (),
-      defined $info{vidcodec} && $info{vidcodec} ne $invalid ? (videocodecid  => $info{vidcodec}) : (),
-      defined $info{vidwidth} && $info{vidwidth} ne $invalid ? (width  => $info{vidwidth}) : (),
-      defined $info{vidheight} && $info{vidheight} ne $invalid ? (height  => $info{vidheight}) : (),
-      defined $info{lasttime} ? (lasttimestamp => $info{lasttime}) : (),
-      @{$info{keyframetimes}} ? (keyframes => {times => $info{keyframetimes}}) : (),
+      canSeekToEnd    => 1,
       metadatacreator => __PACKAGE__ . " v$VERSION",
-      metadatadate => scalar gmtime,
+      metadatadate    => scalar gmtime,
+      filesize        => 0,
    );
 
-   for my $key (keys %meta)
+   if ($duration > 0)
    {
-      if (!defined $self->get_meta($key))
+      $meta{duration} = $duration;
+      if ($info{vidbytes})
       {
-         $self->set_meta($key => $meta{$key});
+         my $kbps = $info{vidbytes} * 8 / (1024 * $duration);
+
+         $meta{videodatarate} = $kbps;
+         $meta{framerate}     = $info{vidtags} / $duration;
+         $meta{videosize}     = $info{vidbytes};
+      }
+      if ($info{audbytes})
+      {
+         my $kbps = $info{audbytes} * 8 / (1024 * $duration);
+
+         $meta{audiodatarate} = $kbps;
+         $meta{audiosize}     = $info{audbytes};
       }
    }
+   if ($audrate)
+   {
+      $meta{audiosamplerate} = $audrate;
+   }
+   if (defined $info{audcodec} && $info{audcodec} ne $invalid)
+   {
+      $meta{audiocodecid} = $info{audcodec};
+   }
+   if (defined $info{vidcodec} && $info{vidcodec} ne $invalid)
+   {
+      $meta{videocodecid} = $info{vidcodec};
+   }
+   if (defined $info{vidwidth} && $info{vidwidth} ne $invalid)
+   {
+      $meta{width} = $info{vidwidth};
+   }
+   if (defined $info{vidheight} && $info{vidheight} ne $invalid)
+   {
+      $meta{height} = $info{vidheight};
+   }
+   if (defined $info{lasttime})
+   {
+      $meta{lasttimestamp} = $info{lasttime};
+   }
+   if (@{ $info{keyframetimes} })
+   {
+      $meta{keyframes} = { times => $info{keyframetimes} };
+   }
+
+   $self->set_meta(%meta);
 
    return;
 }
@@ -206,7 +249,7 @@ indicating whether writing to the file handle was successful.
 
 sub serialize
 {
-   my $self       = shift;
+   my $self = shift;
    my $filehandle = shift || croak 'Please specify a filehandle';
 
    if (!$self->{header})
@@ -217,8 +260,9 @@ sub serialize
    {
       die 'Missing FLV body';
    }
-   return $self->{header}->serialize($filehandle)
-       && $self->{body}->serialize($filehandle);
+   my $headersize = $self->{header}->serialize($filehandle);
+   return if !$headersize;
+   return $self->{body}->serialize($filehandle, $headersize);
 }
 
 =back
@@ -259,7 +303,7 @@ sub get_filename
 
 =item $self->get_meta($key);
 
-=item $self->set_meta($key, $value);
+=item $self->set_meta($key, $value, ...);
 
 These are convenience functions for interacting with an C<onMetadata>
 tag at time 0, which is a common convention in FLV files.  If the 0th
@@ -281,12 +325,10 @@ sub get_meta
 
 sub set_meta
 {
-   my $self  = shift;
-   my $key   = shift;
-   my $value = shift;
+   my $self = shift;
 
    $self->{body} ||= FLV::Body->new();
-   $self->{body}->set_meta($key, $value);
+   $self->{body}->set_meta(@_);
    return;
 }
 
@@ -331,7 +373,7 @@ before all the bytes can be read.
 sub get_bytes
 {
    my $self = shift;
-   my $n    = shift || 0;
+   my $n = shift || 0;
 
    return q{} if ($n <= 0);
 
@@ -366,7 +408,7 @@ erroneous.
 
 sub get_pos
 {
-   my $self   = shift;
+   my $self = shift;
    my $offset = shift || 0;
 
    my $pos = $self->{pos} + $offset;

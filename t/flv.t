@@ -50,6 +50,12 @@ my @samples = (
 
 my @cleanup;
 
+END
+{
+   # Delete temp files
+   unlink $_ for @cleanup;
+}
+
 {
    my $reader = FLV::Info->new();
    eval { $reader->parse('nosuchfile.flv'); };
@@ -179,10 +185,4 @@ for my $sample (@samples)
    $rereader->parse($fh2);
    close $fh2;
    is_deeply($newflv, $flv, 'compare re-serialized');
-}
-
-END
-{
-   # Delete temp files
-   unlink $_ for @cleanup;
 }

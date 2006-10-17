@@ -7,9 +7,9 @@ use English qw(-no_match_vars);
 
 use base 'FLV::Base';
 
-use FLV::Constants;
+use FLV::Util;
 
-our $VERSION = '0.16';
+our $VERSION = '0.17';
 
 =head1 NAME
 
@@ -51,11 +51,11 @@ sub parse
    my $format = (($flags >> 4) & 0x0f);
    my $rate   = (($flags >> 2) & 0x03);
    my $size   = (($flags >> 1) & 0x01);
-   my $type   = ( $flags       & 0x01);
+   my $type   = $flags & 0x01;
 
    if (!exists $AUDIO_FORMATS{$format})
    {
-      die 'Unknown audio format ' . $format . ' at byte ' . $file->get_pos(-1);
+      die "Unknown audio format $format at byte " . $file->get_pos(-1);
    }
 
    $self->{format} = $format;
@@ -79,11 +79,9 @@ sub serialize
 {
    my $self = shift;
 
-   my $flags = pack 'C', 
-         ($self->{format} << 4)
-       | ($self->{rate}   << 2)
-       | ($self->{size}   << 1)
-       |  $self->{type};
+   my $flags = pack 'C',
+       ($self->{format} << 4) | ($self->{rate} << 2) | ($self->{size} << 1) |
+       $self->{type};
    return $flags . $self->{data};
 }
 
@@ -96,12 +94,16 @@ Returns a hash of FLV metadata.  See FLV::Info for more details.
 sub get_info
 {
    my $pkg = shift;
-   return $pkg->_get_info('audio', {
-      format => \%AUDIO_FORMATS,
-      rate   => \%AUDIO_RATES,
-      size   => \%AUDIO_SIZES,
-      type   => \%AUDIO_TYPES,
-   }, \@_);
+   return $pkg->_get_info(
+      'audio',
+      {
+         format => \%AUDIO_FORMATS,
+         rate   => \%AUDIO_RATES,
+         size   => \%AUDIO_SIZES,
+         type   => \%AUDIO_TYPES,
+      },
+      \@_
+   );
 }
 
 1;

@@ -7,13 +7,13 @@ use SWF::File;
 use SWF::Parser;
 use SWF::Element;
 use FLV::File;
-use FLV::Constants;
+use FLV::Util;
 use FLV::AudioTag;
 use FLV::VideoTag;
 use English qw(-no_match_vars);
 use Carp;
 
-our $VERSION = '0.16';
+our $VERSION = '0.17';
 
 =for stopwords SWF transcodes
 
@@ -57,9 +57,7 @@ sub new
 {
    my $pkg = shift;
 
-   my $self = bless {
-      flv => FLV::File->new(),
-   }, $pkg;
+   my $self = bless { flv => FLV::File->new() }, $pkg;
    $self->{flv}->empty();
    $self->{flv}->set_meta(canSeekToEnd => 1);
    return $self;
@@ -84,7 +82,7 @@ sub parse_swf
 
    my $parser = SWF::Parser->new(
       header_callback => sub { $self->_header(@_); },
-      tag_callback => sub { $self->_tag(@_); },
+      tag_callback    => sub { $self->_tag(@_); },
    );
    $parser->parse_file($infile);
 
@@ -110,16 +108,12 @@ sub save
    my $self    = shift;
    my $outfile = shift;
 
-   my $outfh;
-   if ($outfile eq q{-})
+   my $outfh = FLV::Util->get_write_filehandle($outfile);
+   if (!$outfh)
    {
-      $outfh = \*STDOUT;
+      die 'Failed to write FLV: ' . $OS_ERROR;
    }
-   else
-   {
-      open $outfh, '>', $outfile or die 'Failed to write FLV: ' . $OS_ERROR;
-   }
-   binmode $outfh;
+
    $self->{flv}->set_meta(creationdate => scalar gmtime);
    if (!$self->{flv}->serialize($outfh))
    {
@@ -143,6 +137,15 @@ sub _header
    return;
 }
 
+my %tag_subs = (
+   DefineVideoStream => \&_video_stream,
+   VideoFrame        => \&_video_frame,
+   SoundStreamHead   => \&_audio_stream,
+   SoundStreamHead2  => \&_audio_stream,
+   SoundStreamBlock  => \&_audio_block,
+   ShowFrame         => \&_show_frame,
+);
+
 sub _tag
 {
    my $self   = shift;
@@ -155,17 +158,18 @@ sub _tag
    # save ourselves the trouble of maintaining a mapping of tag ID to
    # human-readable name.
    # TODO: rewrite to use SWF::Element::Tag methods
-   (my $tagname = SWF::Element::Tag->_tag_class($tagid))  ## no critic(ProtectPrivateSubs)
-       =~ s/SWF::Element::Tag:://xms;
 
-   return 
-       $tagname eq 'DefineVideoStream' ? $self->_video_stream($stream, $length)
-     : $tagname eq 'VideoFrame'        ? $self->_video_frame($stream, $length)
-     : $tagname eq 'SoundStreamHead'   ? $self->_audio_stream($stream, $length)
-     : $tagname eq 'SoundStreamHead2'  ? $self->_audio_stream($stream, $length)
-     : $tagname eq 'SoundStreamBlock'  ? $self->_audio_block($stream, $length)
-     : $tagname eq 'ShowFrame'         ? $self->_show_frame($stream, $length)
-     : ();
+   ## no critic(ProtectPrivateSubs)
+   my $tagname = SWF::Element::Tag->_tag_class($tagid);
+   $tagname =~ s/SWF::Element::Tag:://xms;
+
+   my $tag_sub = $tag_subs{$tagname};
+   if ($tag_sub)
+   {
+      $self->$tag_sub($stream, $length);
+   }
+
+   return;
 }
 
 sub _show_frame
@@ -184,7 +188,8 @@ sub _audio_stream
    my $stream = shift;
    my $length = shift;
 
-   my ($playflags, $streamflags, $count) = unpack 'CCv', $stream->get_string(4);
+   my $streamhead = $stream->get_string(4);
+   my ($playflags, $streamflags, $count) = unpack 'CCv', $streamhead;
    $self->{audiocodec} = ($streamflags >> 4) & 0xf;
    $self->{audiorate}  = ($streamflags >> 2) & 0x3;
    $self->{audiosize}  = ($streamflags >> 1) & 0x1;
@@ -214,7 +219,7 @@ sub _audio_block
       warn 'Skipping empty audio block';
       return;
    }
-   
+
    my $audiotag = FLV::AudioTag->new();
 
    # time calculation will be redone for MP3...
@@ -234,28 +239,34 @@ sub _audio_block
       }
 
       my ($samples) = unpack 'v', $stream->get_string(2);
+      my ($seek)    = unpack 'v', $stream->get_string(2);
 
-      my ($seek) = unpack 'v', $stream->get_string(2);
       # unsigned -> signed conversion
       $seek = unpack 's', pack 'S', $seek;
 
       $audiotag->{data} = $stream->get_string($length - 4);
 
-      (my $rate = $AUDIO_RATES{$self->{audiorate}}) =~ s/\D//gxms;
+      (my $rate = $AUDIO_RATES{ $self->{audiorate} }) =~ s/\D//gxms;
+
       if ($self->{samples} == 0)
       {
          my $frame = $self->{framenumber};
          if ($frame == 1)
          {
-            # Often audio skips one frame.  This is true for On2 SWFs, but not Sorenson.
+
+            # Often audio skips one frame.
+            # This is true for On2 SWFs, but not Sorenson.
             $frame = 0;
          }
+
          $self->{samples} = $rate * $frame / $self->{header}->{rate};
       }
+
       $millisec = 1000 * $self->{samples} / $rate;
       if ($millisec > 4_000_000_000 || $millisec < 0)
       {
-         warn "Funny output timestamp: $millisec ($self->{samples}, $samples, $rate)";
+         warn 'Funny output timestamp: '
+             . "$millisec ($self->{samples}, $samples, $rate)";
       }
       $self->{samples} += $samples;
    }
@@ -265,7 +276,7 @@ sub _audio_block
    }
    $audiotag->{start} = int $millisec;
 
-   push @{$self->{flv}->{body}->{tags}}, $audiotag;
+   push @{ $self->{flv}->{body}->{tags} }, $audiotag;
    $self->{audiobytes} += $length;
 
    return;
@@ -307,7 +318,7 @@ sub _video_frame
       warn 'Skipping empty video block';
       return;
    }
-   
+
    my ($streamid, $framenum) = unpack 'vv', $stream->get_string(4);
    return if ($self->{streamid} != $streamid);
    my $videotag = FLV::VideoTag->new();
@@ -316,18 +327,22 @@ sub _video_frame
    $videotag->{data}  = $stream->get_string($length - 4);
    $videotag->{codec} = $self->{codec};
 
-   if ($self->{codec} == 2) ## no critic(ControlStructures::ProhibitCascadingIfElse)
+   ## no critic(ControlStructures::ProhibitCascadingIfElse)
+
+   if ($self->{codec} == 2)
    {
       $videotag->_parse_h263(0);
    }
    elsif ($self->{codec} == 3 || $self->{codec} == 6)
    {
-      $videotag->_parse_screen_video(0);
+
       # zeroth frame is a key frame, all others are deltas.  Right???
+      $videotag->_parse_screen_video(0);
       $videotag->{type} = $framenum ? 2 : 1;
    }
    elsif ($self->{codec} == 4)
    {
+
       # prepend pixel offsets present in FLV, but absent in SWF
       my $offset = pack 'C', 0;
       $videotag->{data} = $offset . $videotag->{data};
@@ -335,13 +350,14 @@ sub _video_frame
    }
    elsif ($self->{codec} == 5)
    {
+
       # prepend pixel offsets present in FLV, but absent in SWF
       my $offset = pack 'C', 0;
       $videotag->{data} = $offset . $videotag->{data};
       $videotag->_parse_on2vp6_alpha(0);
    }
 
-   push @{$self->{flv}->{body}->{tags}}, $videotag;
+   push @{ $self->{flv}->{body}->{tags} }, $videotag;
    $self->{videobytes} += $length;
 
    return;

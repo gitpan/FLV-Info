@@ -9,7 +9,7 @@ use Pod::Usage;
 use English qw(-no_match_vars);
 use FLV::ToSWF;
 
-our $VERSION = '0.16';
+our $VERSION = '0.17';
 
 my %opts = (
    background => '000000',
@@ -19,11 +19,12 @@ my %opts = (
 );
 
 Getopt::Long::Configure('bundling');
-GetOptions('b|background=s' => \$opts{background},
-           'v|verbose'      => \$opts{verbose},
-           'h|help'         => \$opts{help},
-           'V|version'      => \$opts{version},
-           ) or pod2usage(1);
+GetOptions(
+   'b|background=s' => \$opts{background},
+   'v|verbose'      => \$opts{verbose},
+   'h|help'         => \$opts{help},
+   'V|version'      => \$opts{version},
+) or pod2usage(1);
 if ($opts{help})
 {
    pod2usage(-exitstatus => 0, -verbose => 2);
@@ -39,11 +40,11 @@ if (@ARGV < 2)
    pod2usage(1);
 }
 
-my $infile = shift;
+my $infile  = shift;
 my $outfile = shift;
 
 my $converter = FLV::ToSWF->new();
-my @bg = map {hex} $opts{background} =~ m/([\da-fA-F]{2})/gxms;
+my @bg = map { hex } $opts{background} =~ m/([\da-fA-F]{2})/gxms;
 $converter->{background_color} = \@bg;
 $converter->parse_flv($infile);
 $converter->save($outfile);

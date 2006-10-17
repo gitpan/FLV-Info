@@ -4,12 +4,12 @@ use warnings;
 use strict;
 
 use FLV::File;
-use FLV::Constants;
+use FLV::Util;
 use FLV::AudioTag;
 use English qw(-no_match_vars);
 use Carp;
 
-our $VERSION = '0.16';
+our $VERSION = '0.17';
 
 =for stopwords MP3 transcodes framerate
 
@@ -53,9 +53,7 @@ sub new
 {
    my $pkg = shift;
 
-   my $self = bless {
-      flv => FLV::File->new(),
-   }, $pkg;
+   my $self = bless { flv => FLV::File->new() }, $pkg;
    $self->{flv}->empty();
    return $self;
 }
@@ -90,7 +88,8 @@ sub _validate
    }
    if ($acodec != 2)
    {
-      die "Audio format $AUDIO_FORMATS{$acodec} not supported; only MP3 audio allowed\n";
+      die "Audio format $AUDIO_FORMATS{$acodec} not supported; "
+          . "only MP3 audio allowed\n";
    }
    return;
 }
@@ -109,17 +108,12 @@ sub save
 
    $self->_validate();
 
-   my $outfh;
-   if ($outfile eq q{-})
+   my $outfh = FLV::Util->get_write_filehandle($outfile);
+   if (!$outfh)
    {
-      $outfh = \*STDOUT;
+      die 'Failed to write MP3 file: ' . $OS_ERROR;
    }
-   else
-   {
-      open $outfh, '>', $outfile
-          or die 'Failed to write MP3 file: ' . $OS_ERROR;
-   }
-   binmode $outfh;
+
    for my $tag ($self->{flv}->{body}->get_tags())
    {
       next if (!$tag->isa('FLV::AudioTag'));

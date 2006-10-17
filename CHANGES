@@ -1,5 +1,18 @@
 Revision history for Perl module FLV::Info
 
+0.17  17 Oct 2006
+      [ENHANCEMENTS]
+      - Support for keyframe file position metadata
+      - Support for multiple metadata tags
+      - Add merge_meta to combine zero or more metadata tags into one
+      - Change set_meta to allow multiple key-value pairs
+      [STANDARDS]
+      - Applied Perl::Tidy
+      - Comply with Perl::Critic v0.21 and Bangs
+      [INTERNALS]
+      - Rename FLV::Constants to FLV::Util
+      - Code coverage is down, but still close to 90%
+
 0.16  11 Oct 2006
       [FIXES]
       - bin/flv2flv now actually works

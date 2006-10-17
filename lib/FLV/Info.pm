@@ -7,9 +7,9 @@ use Data::Dumper;
 
 use FLV::File;
 
-our $VERSION = '0.16';
+our $VERSION = '0.17';
 
-=for stopwords FLVTool2 interframes keyframes
+=for stopwords FLVTool2 interframes keyframes FFmpeg SWFs FLVs SWF FLV codec
 
 =head1 NAME
 
@@ -53,15 +53,17 @@ the following quality metrics:
 
 =over
 
-=item * Perl::Critic v0.18 passes
+=item * Perl::Critic v0.21 passes
 
-=item * Devel::Cover test coverage over 90%
+=item * Devel::Cover test coverage almost 90%
 
 =item * Pod::Coverage at 100%
 
 =item * Test::Spelling passes
 
 =item * Test::Portability::Files passes
+
+=item * Test::Kwalitee passes
 
 =back
 
@@ -105,7 +107,7 @@ sub parse
 
    $self->{info} = undef;
    $self->{file} = FLV::File->new();
-   $self->{file}->parse($filename);   # might throw exception
+   $self->{file}->parse($filename);    # might throw exception
    return;
 }
 
@@ -134,7 +136,7 @@ sub get_info
       }
       $self->{info} = \%info;
    }
-   return %{$self->{info}};
+   return %{ $self->{info} };
 }
 
 =item $self->report()
@@ -157,16 +159,20 @@ sub report
    # p = prefix
    # f = filter subroutine
    my @outputs = (
-      {l => 'File name', k => 'filename',                   },
-      {l => 'File size', k => 'filesize',    u => 'byte',   },
-      {l => 'Duration',  k => 'duration',    u => 'second',
-       f => sub {return 'about '.($_[0]/1000);},            },  # convert millisec to sec
-      {l => 'Video',     k => 'video_count', u => 'frame',  },
-      {r => qr/\A video_/xms, p => q{  },                   },
-      {l => 'Audio',     k => 'audio_count', u => 'packet', },
-      {r => qr/\A audio_/xms, p => q{  },                   },
-      {l => 'Meta',      k => 'meta_count',  u => 'event',  },
-      {r => qr/\A meta_/xms,  p => q{  },                   },
+      { l => 'File name', k => 'filename', },
+      { l => 'File size', k => 'filesize', u => 'byte', },
+      {
+         l => 'Duration',
+         k => 'duration',
+         u => 'second',
+         f => sub { return 'about ' . ($_[0] / 1000); },
+      },    # convert millisec to sec
+      { l => 'Video',          k => 'video_count', u => 'frame', },
+      { r => qr/\A video_/xms, p => q{  }, },
+      { l => 'Audio',          k => 'audio_count', u => 'packet', },
+      { r => qr/\A audio_/xms, p => q{  }, },
+      { l => 'Meta',           k => 'meta_count',  u => 'event', },
+      { r => qr/\A meta_/xms,  p => q{  }, },
    );
 
    # Flag keys to ignore in regex matches
@@ -183,7 +189,7 @@ sub report
          {
             next if ($seen{$key});
             (my $label = $key) =~ s/$output->{r}//xms;
-            push @r, {l => $output->{p}.$label, k => $key};
+            push @r, { l => $output->{p} . $label, k => $key };
          }
          splice @outputs, $i, 1, @r;
       }
@@ -196,7 +202,7 @@ sub report
    my $out = q{};
    for my $output (@outputs)
    {
-      my $value = $info{$output->{k}};
+      my $value = $info{ $output->{k} };
       next if (!$value);
 
       # Apply filter if any
@@ -212,19 +218,23 @@ sub report
       }
       elsif (ref $value)
       {
+
          # Make multiline output for a complex data structure
          my $d = Data::Dumper->new([$value], ['VAR']);
          (my $label = $output->{l}) =~ s/\S+/  >>>/xms;
-         my $varprefix = '$VAR = '; ##no critic(RequireInterpolationOfMetachars)
+         my $varprefix = '$VAR = ';    ##no critic(InterpolationOfMetachars)
+
          # "+2" is for 2 spaces in normal output
-         my $padding = q{ } x ($max_label_length +2 - length $label.$varprefix);
+         my $padding
+             = q{ } x ($max_label_length + 2 - length $label . $varprefix);
+
          $d->Pad($label . $padding);
          $value = $d->Dump();
          $value =~ s/\A\s*>>>\s*\Q$varprefix\E//xms;
          $value =~ s/;\s+\z//xms;
       }
 
-      my $label   = $output->{l};
+      my $label = $output->{l};
       my $padding = q{ } x ($max_label_length - length $label);
 
       $out .= "$label $padding $value\n";
@@ -268,15 +278,29 @@ L<http://inlet-media.de/flvtool2>
 
 This is a Perl implementation of the L<http://www.amfphp.org/> project
 to create an open source representation of the Flash remote
-communication protocol.  This module leverages a small part of AMF::Perl to parse FLV
-meta tags.
+communication protocol.  This module leverages a small part of
+AMF::Perl to parse FLV meta tags.
+
+=item FFmpeg
+
+FFmpeg is a powerful media conversion utility.  It is capable of
+reading and writing FLVs and SWFs.  However as of this writing, I
+believe it does not support fast transcoding between FLV and SWF
+formats.
+
+L<http://ffmpeg.mplayerhq.hu/>
 
 =back
 
 =head1 COMPATIBILITY
 
-This module should work with FLV v1.0 and FLV v1.1 files.  All other
-versions will certainly fail.
+This module should work with FLV v1.0 and FLV v1.1 files.  Any other
+versions (none known as of this writing) will certainly fail.
+
+Interaction with FLVs using the screen video codec or using alpha
+channels is not yet tested.  If someone has short videos employing
+those features that can be released with the FLV::Info test suite,
+please contact me.
 
 =head1 AUTHOR
 

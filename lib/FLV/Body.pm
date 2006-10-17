@@ -4,6 +4,7 @@ use warnings;
 use strict;
 use Carp;
 use English qw(-no_match_vars);
+use File::Temp qw();
 
 use base 'FLV::Base';
 
@@ -12,7 +13,9 @@ use FLV::VideoTag;
 use FLV::AudioTag;
 use FLV::MetaTag;
 
-our $VERSION = '0.16';
+our $VERSION = '0.17';
+
+=for stopwords keyframe
 
 =head1 NAME
 
@@ -45,6 +48,8 @@ sub parse
 {
    my $self = shift;
    my $file = shift;
+   my $opts = shift;
+   $opts ||= {};
 
    my @tags;
 
@@ -59,7 +64,7 @@ TAGS:
       }
 
       my $tag = FLV::Tag->new();
-      $tag->parse($file);    # might throw exception
+      $tag->parse($file, $opts);    # might throw exception
       push @tags, $tag->get_payload();
    }
 
@@ -68,7 +73,11 @@ TAGS:
       'FLV::AudioTag' => 2,
       'FLV::VideoTag' => 3,
    );
-   $self->{tags} = [sort {$a->{start} <=> $b->{start} || ($tagorder{ref $a}||0) <=> ($tagorder{ref $b}||0)} @tags];
+   @tags = sort {
+             $a->{start} <=> $b->{start}
+          || $tagorder{ ref $a } <=> $tagorder{ ref $b }
+   } @tags;
+   $self->{tags} = \@tags;
    return;
 }
 
@@ -84,19 +93,158 @@ sub serialize
 {
    my $self       = shift;
    my $filehandle = shift || croak 'Please specify a filehandle';
+   my $headersize = shift || 9;
 
    return if (!print {$filehandle} pack 'V', 0);
+   return if (!$self->{tags});
 
-   for my $tag (@{$self->{tags}})
+   my $size_so_far = $headersize + 4;
+   for my $i (0 .. $#{ $self->{tags} })
    {
+      my $tag = $self->{tags}->[$i];
+      if (
+         $tag->isa('FLV::MetaTag')
+         && (  defined $tag->get_value('keyframes')
+            || defined $tag->get_value('filesize'))
+          )
+      {
+         return $self->_serialize_with_sizes($filehandle, $i, $size_so_far);
+      }
       my $size = FLV::Tag->serialize($tag, $filehandle);
       if (!$size)
       {
          return;
       }
       print {$filehandle} pack 'V', $size;
+      $size_so_far += $size + 4;
    }
    return 1;
+}
+
+sub _serialize_with_sizes
+{
+   my $self        = shift;
+   my $filehandle  = shift;
+   my $i           = shift;
+   my $size_so_far = shift;
+
+   my $meta = $self->{tags}->[$i];
+
+   my $keyframes = $meta->get_value('keyframes');
+   my $filesize  = $meta->get_value('filesize');
+
+   # Write the REST of the tags out to a tempfile
+   my ($media_fh, $media_filename) = File::Temp::tempfile();
+   my $success = 1;
+   my $pos     = 0;
+   my @filepositions;
+   for my $tag (@{ $self->{tags} }[$i + 1 .. $#{ $self->{tags} }])
+   {
+      if ($tag->isa('FLV::VideoTag') && $tag->is_keyframe())
+      {
+         push @filepositions, $pos;
+      }
+      my $size = FLV::Tag->serialize($tag, $media_fh);
+      if (!$size)
+      {
+         $success = 0;
+         last;
+      }
+      print {$media_fh} pack 'V', $size;
+      $pos += $size + 4;
+   }
+   close $media_fh;
+
+   if (!$success)
+   {
+
+      # Abort, write out without file positions
+      delete $keyframes->{filepositions};
+      $meta->set_value('filesize', undef);
+      my $size = FLV::Tag->serialize($meta, $filehandle);
+      if (!$size)
+      {
+         unlink $media_filename;
+         return;
+      }
+      print {$filehandle} pack 'V', $size;
+      $self->_copy_file_to_fh($media_filename, $filehandle);
+      unlink $media_filename;
+      return;
+   }
+
+   # Problem: changing the file positions in the metatag changes the
+   # size of the metatag and, thus, the filepositions.
+
+   # Solution: set file positions in metadata, write out as temp file
+   # to get resulting size, and iterate until sizes converge.  This
+   # should happen on the second iteration if the sizes are written
+   # out as numbers and not as strings.
+
+   # Start with a (wrong) guess of zero bytes
+   my ($meta_fh, $meta_filename) = File::Temp::tempfile();
+   close $meta_fh;
+
+   my $tries = 0;
+   while ($tries++ < 10)
+   {
+      my $meta_size = -s $meta_filename;
+
+      # Put in corrected sizes
+      my $offset = $size_so_far + $meta_size;
+      if ($keyframes)
+      {
+         $keyframes->{filepositions} = [map { $offset + $_ } @filepositions];
+      }
+      $meta->set_value('filesize', $offset + -s $media_filename);
+
+      # Write out meta tag to tempfile
+      # Warning: I'm ignoring the case of a failure to write out the
+      #    metatag at all
+      my ($try_fh, $try_filename) = File::Temp::tempfile();
+      my $size = FLV::Tag->serialize($meta, $try_fh);
+      if ($size)
+      {
+         print {$try_fh} pack 'V', $size;
+      }
+      close $try_fh;
+
+      # Clean up last try.  This try becomes "last try" for the next iteration
+      unlink $meta_filename;
+      $meta_filename = $try_filename;
+
+      # Did we converge?
+      if ($meta_size == -s $meta_filename)
+      {
+
+         # Yes!
+         last;
+      }
+
+      # Otherwise do another iteration
+   }
+
+   $self->_copy_file_to_fh($meta_filename, $filehandle);
+   unlink $meta_filename;
+   $self->_copy_file_to_fh($media_filename, $filehandle);
+   unlink $media_filename;
+   return 1;
+}
+
+sub _copy_file_to_fh
+{
+   my $self       = shift;
+   my $filename   = shift;
+   my $filehandle = shift;
+
+   open my ($fh), '<', $filename or die 'Failed to open temporary file';
+   my $buf;
+   while (read $fh, $buf, 4096)
+   {
+      print {$filehandle} $buf;
+   }
+   close $fh;
+   return;
 }
 
 =item $self->get_info()
@@ -110,10 +258,16 @@ sub get_info
    my $self = shift;
 
    my %info = (
-      duration    => $self->last_start_time(),
-      FLV::VideoTag->get_info(grep { $_->isa('FLV::VideoTag') } @{$self->{tags}}),
-      FLV::AudioTag->get_info(grep { $_->isa('FLV::AudioTag') } @{$self->{tags}}),
-      FLV::MetaTag->get_info(grep { $_->isa('FLV::MetaTag') } @{$self->{tags}}),
+      duration => $self->last_start_time(),
+      FLV::VideoTag->get_info(
+         grep { $_->isa('FLV::VideoTag') } @{ $self->{tags} }
+      ),
+      FLV::AudioTag->get_info(
+         grep { $_->isa('FLV::AudioTag') } @{ $self->{tags} }
+      ),
+      FLV::MetaTag->get_info(
+         grep { $_->isa('FLV::MetaTag') } @{ $self->{tags} }
+      ),
    );
 
    return %info;
@@ -129,7 +283,7 @@ sub get_tags
 {
    my $self = shift;
 
-   return @{$self->{tags}};
+   return @{ $self->{tags} };
 }
 
 =item $self->get_video_frames()
@@ -142,7 +296,22 @@ sub get_video_frames
 {
    my $self = shift;
 
-   return grep { $_->isa('FLV::VideoTag') } @{$self->{tags}};
+   return grep { $_->isa('FLV::VideoTag') } @{ $self->{tags} };
+}
+
+=item $self->get_video_keyframes()
+
+Returns just the video tags which contain keyframe data.
+
+=cut
+
+sub get_video_keyframes
+{
+   my $self = shift;
+
+   return
+       grep { $_->isa('FLV::VideoTag') && $_->is_keyframe() }
+       @{ $self->{tags} };
 }
 
 =item $self->get_audio_packets()
@@ -155,7 +324,7 @@ sub get_audio_packets
 {
    my $self = shift;
 
-   return grep { $_->isa('FLV::AudioTag') } @{$self->{tags}};
+   return grep { $_->isa('FLV::AudioTag') } @{ $self->{tags} };
 }
 
 =item $self->get_meta_tags()
@@ -168,7 +337,7 @@ sub get_meta_tags
 {
    my $self = shift;
 
-   return grep { $_->isa('FLV::MetaTag') } @{$self->{tags}};
+   return grep { $_->isa('FLV::MetaTag') } @{ $self->{tags} };
 }
 
 =item $self->last_start_time()
@@ -188,7 +357,7 @@ sub last_start_time
 
 =item $self->get_meta($key);
 
-=item $self->set_meta($key, $value);
+=item $self->set_meta($key, $value, ...);
 
 These are convenience functions for interacting with an C<onMetadata>
 tag at time 0, which is a common convention in FLV files.  If the 0th
@@ -205,27 +374,76 @@ sub get_meta
    my $key  = shift;
 
    return if (!$self->{tags});
-   my $meta = $self->{tags}->[0];
-   return if (!eval { $meta->isa('FLV::MetaTag') });
-   return $meta->get_value($key);
+   for my $meta (grep { $_->isa('FLV::MetaTag') } @{ $self->{tags} })
+   {
+      my $value = $meta->get_value($key);
+      return $value if (defined $value);
+   }
+   return;
 }
 
 sub set_meta
 {
-   my $self  = shift;
-   my $key   = shift;
-   my $value = shift;
+   my $self      = shift;
+   my @keyvalues = @_;
 
-   my $meta;
    $self->{tags} ||= [];
-   $meta = $self->{tags}->[0];
-   if (!eval { $meta->isa('FLV::MetaTag') })
+   my @metatags = grep { $_->isa('FLV::MetaTag') } @{ $self->{tags} };
+   if (!@metatags)
    {
-      $meta = FLV::MetaTag->new();
-      $meta->{start} = 0;
-      unshift @{$self->{tags}}, $meta;
+
+      # no metatags at all!  Create one.
+      my $new_meta = FLV::MetaTag->new();
+      $new_meta->{start} = 0;
+      unshift @{ $self->{tags} }, $new_meta;
+      @metatags = ($new_meta);
    }
-   $meta->set_value($key => $value);
+
+KEYVALUE:
+   while (@keyvalues)
+   {
+      my ($key, $value) = splice @keyvalues, 0, 2;
+
+      # Check all existing meta tags for that key
+      for my $meta (@metatags)
+      {
+         if (defined $meta->get_value($key))
+         {
+            $meta->set_value($key => $value);
+            next KEYVALUE;
+         }
+      }
+
+      # key not found
+      $metatags[0]->set_value($key => $value);
+   }
+
+   return;
+}
+
+=item $self->merge_meta()
+
+Consolidate zero or more meta tags into a single tag.  If there are
+more than one tags and there are any duplicate keys, the first key
+takes precedence.
+
+=cut
+
+sub merge_meta
+{
+   my $self = shift;
+
+   $self->{tags} ||= [];
+
+   # Remove all meta tags
+   my @meta = grep { $_->isa('FLV::MetaTag') } @{ $self->{tags} };
+   @{ $self->{tags} } = grep { !$_->isa('FLV::MetaTag') } @{ $self->{tags} };
+
+   # Merge all metadata
+   my %meta = map { $_->get_values() } reverse @meta;
+
+   # Insert a new metatag
+   $self->set_meta(%meta);
    return;
 }
 

@@ -9,9 +9,9 @@ use base 'FLV::Base';
 
 use FLV::AMFReader;
 use FLV::AMFWriter;
-use FLV::Constants;
+use FLV::Util;
 
-our $VERSION = '0.16';
+our $VERSION = '0.17';
 
 =for stopwords FLVTool2 AMF
 
@@ -77,7 +77,7 @@ sub serialize
 {
    my $self = shift;
 
-   my $content = FLV::AMFWriter->new()->write_flv_meta(@{$self->{data}});
+   my $content = FLV::AMFWriter->new()->write_flv_meta(@{ $self->{data} });
    return $content;
 }
 
@@ -90,12 +90,16 @@ Returns a hash of FLV metadata.  See FLV::Info for more details.
 sub get_info
 {
    my $pkg  = shift;
-   my %info = $pkg->_get_info('meta', {}, \@_);
-   if (@_ == 1)
+   my @tags = @_;
+
+   my @records;
+   my %keys;
+   for my $tag (@tags)
    {
-      my $data = $_[0]->{data}->[1];
+      my $data = $tag->{data}->[1];
       if ($data)
       {
+         my %fields;
          for my $key (keys %{$data})
          {
             my $value = $data->{$key};
@@ -105,12 +109,17 @@ sub get_info
             }
             $value =~ s/ \A \s+    //xms;
             $value =~ s/    \s+ \z //xms;
-            $info{'meta_'.$key} = $value;
+            $fields{$key} = $value;
+            $keys{$key}   = undef;
          }
+         push @records, \%fields;
       }
    }
+   my %info = $pkg->_get_info('meta', \%keys, \@records);
    return %info;
 }
+
+=item $self->get_values();
 
 =item $self->get_value($key);
 
@@ -119,7 +128,21 @@ sub get_info
 These are convenience functions for interacting with an C<onMetadata>
 hash.
 
+C<get_values()> returns a hash of all metadata key-value pairs.
+C<get_value($key)> returns a single value.  C<set_value()> has no return
+value.
+
 =cut
+
+sub get_values
+{
+   my $self = shift;
+
+   return if (!$self->{data});
+   return if (@{ $self->{data} } < 2);
+   return if ($self->{data}->[0] ne 'onMetaData');
+   return %{ $self->{data}->[1] };
+}
 
 sub get_value
 {
@@ -127,22 +150,36 @@ sub get_value
    my $key  = shift;
 
    return if (!$self->{data});
-   return if (@{$self->{data}} != 2);
+   return if (@{ $self->{data} } < 2);
+   return if ($self->{data}->[0] ne 'onMetaData');
    return $self->{data}->[1]->{$key};
 }
 
 sub set_value
 {
-   my $self  = shift;
-   my $key   = shift;
-   my $value = shift;
+   my $self      = shift;
+   my @keyvalues = @_;
 
-   $self->{data} ||= ['onMetaData', {}];
-   if (@{$self->{data}} != 2)
+   $self->{data} ||= [];
+   if (@{ $self->{data} } < 2 || $self->{data}->[0] ne 'onMetaData')
    {
-      die 'Cannot set metadata';
+      unshift @{ $self->{data} }, 'onMetaData', {};
    }
-   $self->{data}->[1]->{$key} = $value;
+
+   while (@keyvalues)
+   {
+      my ($key, $value) = splice @keyvalues, 0, 2;
+
+      if (defined $value)
+      {
+         $self->{data}->[1]->{$key} = $value;
+      }
+      else
+      {
+         delete $self->{data}->[1]->{$key};
+      }
+   }
+
    return;
 }
 

@@ -6,7 +6,7 @@ use Carp;
 
 use base 'FLV::Base';
 
-our $VERSION = '0.16';
+our $VERSION = '0.17';
 
 =for stopwords FLVTool2
 
@@ -82,20 +82,21 @@ sub parse
 =item $self->serialize($filehandle)
 
 Serializes the in-memory FLV header.  If that representation is not
-complete, this throws an exception via croak().  Returns a boolean
-indicating whether writing to the file handle was successful.
+complete, this throws an exception via croak().  Returns the number of
+bytes written.
 
 =cut
 
 sub serialize
 {
-   my $self       = shift;
+   my $self = shift;
    my $filehandle = shift || croak 'Please specify a filehandle';
 
-   my $flags = ($self->{has_audio} ? 0x04 : 0)
-             | ($self->{has_video} ? 0x01 : 0);
+   my $flags
+       = ($self->{has_audio} ? 0x04 : 0) | ($self->{has_video} ? 0x01 : 0);
    my $header = pack 'A3CCN', 'FLV', 1, $flags, 9;
-   return print {$filehandle} $header;
+   my $result = print {$filehandle} $header;
+   return $result ? length $header : 0;
 }
 
 =item $self->has_video()

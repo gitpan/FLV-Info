@@ -9,19 +9,20 @@ use Pod::Usage;
 use English qw(-no_match_vars);
 use FLV::ToMP3;
 
-our $VERSION = '0.16';
+our $VERSION = '0.17';
 
 my %opts = (
-   verbose    => 0,
-   help       => 0,
-   version    => 0,
+   verbose => 0,
+   help    => 0,
+   version => 0,
 );
 
 Getopt::Long::Configure('bundling');
-GetOptions('v|verbose'      => \$opts{verbose},
-           'h|help'         => \$opts{help},
-           'V|version'      => \$opts{version},
-           ) or pod2usage(1);
+GetOptions(
+   'v|verbose' => \$opts{verbose},
+   'h|help'    => \$opts{help},
+   'V|version' => \$opts{version},
+) or pod2usage(1);
 if ($opts{help})
 {
    pod2usage(-exitstatus => 0, -verbose => 2);
@@ -37,7 +38,7 @@ if (@ARGV < 2)
    pod2usage(1);
 }
 
-my $infile = shift;
+my $infile  = shift;
 my $outfile = shift;
 
 my $converter = FLV::ToMP3->new();

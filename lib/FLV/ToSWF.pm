@@ -6,13 +6,13 @@ use strict;
 use SWF::File;
 use SWF::Element;
 use FLV::File;
-use FLV::Constants;
+use FLV::Util;
 use FLV::AudioTag;
 use FLV::VideoTag;
 use English qw(-no_match_vars);
 use Carp;
 
-our $VERSION = '0.16';
+our $VERSION = '0.17';
 
 =for stopwords SWF transcodes framerate
 
@@ -58,7 +58,7 @@ sub new
 
    my $self = bless {
       flv              => FLV::File->new(),
-      background_color => [0,0,0], # RGB, black
+      background_color => [0, 0, 0],          # RGB, black
    }, $pkg;
    $self->{flv}->empty();
    return $self;
@@ -83,7 +83,8 @@ sub parse_flv
    my $acodec = $self->{flv}->get_meta('audiocodecid') || 0;
    if ($acodec != 2)
    {
-      die "$AUDIO_FORMATS{$acodec} not supported yet; only MP3 audio allowed\n";
+      die "$AUDIO_FORMATS{$acodec} not supported yet; "
+          . "only MP3 audio allowed\n";
    }
 
    return;
@@ -109,17 +110,18 @@ sub save
 
    $self->{audsamples} = 0;
 
-   for my $i (0 .. $#{$flvinfo->{vidtags}})
+   for my $i (0 .. $#{ $flvinfo->{vidtags} })
    {
       my $vidtag = $flvinfo->{vidtags}->[$i];
-      my $data = $vidtag->{data};
+      my $data   = $vidtag->{data};
       if ($vidtag->{codec} == 4 || $vidtag->{codec} == 5)
       {
+
          # On2 VP6 is different in FLV vs. SWF!
          if ($data !~ s/\A(.)//xms || $1 ne pack 'C', 0)
          {
-            warn 'This FLV has a non-zero video size adjustment. ' .
-                "It may not play properly as a SWF...\n";
+            warn 'This FLV has a non-zero video size adjustment. '
+                . "It may not play properly as a SWF...\n";
          }
       }
       SWF::Element::Tag::VideoFrame->new(
@@ -128,11 +130,12 @@ sub save
          VideoData => $data,
       )->pack($swf);
 
-      SWF::Element::Tag::PlaceObject2->new(
-         $i == 0 ? (
-            Flags       => 22, # matrix, tween ratio and characterID
+      if ($i == 0)
+      {
+         SWF::Element::Tag::PlaceObject2->new(
+            Flags       => 22,    # matrix, tween ratio and characterID
             CharacterID => 1,
-            Matrix      => SWF::Element::MATRIX->new(
+            Matrix => SWF::Element::MATRIX->new(
                ScaleX      => 1,
                ScaleY      => 1,
                RotateSkew0 => 0,
@@ -140,14 +143,21 @@ sub save
                TranslateX  => 0,
                TranslateY  => 0,
             ),
-         ) : (
-            Flags => 17, # move and tween ratio
-         ),
-         Ratio => $i,
-         Depth => 4,
-      )->pack($swf);
+            Ratio => $i,
+            Depth => 4,
+         )->pack($swf);
+      }
+      else
+      {
+         SWF::Element::Tag::PlaceObject2->new(
+            Flags => 17,    # move and tween ratio
+            Ratio => $i,
+            Depth => 4,
+         )->pack($swf);
+      }
 
-      $self->_add_audio($swf, $flvinfo, $vidtag->{start}, $i == $#{$flvinfo->{vidtags}});
+      $self->_add_audio($swf, $flvinfo, $vidtag->{start},
+         $i == $#{ $flvinfo->{vidtags} });
 
       SWF::Element::Tag::ShowFrame->new()->pack($swf);
    }
@@ -166,7 +176,7 @@ sub _add_audio
    my $start   = shift;
    my $islast  = shift;
 
-   if (@{$flvinfo->{audtags}})
+   if (@{ $flvinfo->{audtags} })
    {
       my $data     = q{};
       my $any_tag  = $flvinfo->{audtags}->[0];
@@ -186,14 +196,16 @@ sub _add_audio
       my $needsamples  = int 0.001 * $start * $rate;
       my $startsamples = $self->{audsamples};
 
-      while (@{$flvinfo->{audtags}} && ($islast || $self->{audsamples} < $needsamples))
+      while (@{ $flvinfo->{audtags} }
+         && ($islast || $self->{audsamples} < $needsamples))
       {
-         my $atag = shift @{$flvinfo->{audtags}};
+         my $atag = shift @{ $flvinfo->{audtags} };
          $data .= $atag->{data};
-         $self->{audsamples}
-             = $self->_round_to_samples(@{$flvinfo->{audtags}} ?
-                                        0.001 * $flvinfo->{audtags}->[0]->{start} * $rate :
-                                        1_000_000_000);
+         $self->{audsamples} = $self->_round_to_samples(
+            @{ $flvinfo->{audtags} }
+            ? 0.001 * $flvinfo->{audtags}->[0]->{start} * $rate
+            : 1_000_000_000
+         );
       }
       if (0 < length $data)
       {
@@ -206,8 +218,7 @@ sub _add_audio
 
          my $head = pack 'vv', $samples, $seek;
          SWF::Element::Tag::SoundStreamBlock->new(
-            StreamSoundData => $head.$data,
-         )->pack($swf);
+            StreamSoundData => $head . $data)->pack($swf);
       }
    }
    return;
@@ -237,12 +248,12 @@ sub _flvinfo
       {
          if ($tag->isa('FLV::VideoTag'))
          {
-            push @{$flvinfo{vidtags}}, $tag;
+            push @{ $flvinfo{vidtags} }, $tag;
             $flvinfo{vidbytes} += length $tag->{data};
          }
          elsif ($tag->isa('FLV::AudioTag'))
          {
-            push @{$flvinfo{audtags}}, $tag;
+            push @{ $flvinfo{audtags} }, $tag;
             $flvinfo{audbytes} += length $tag->{data};
          }
       }
@@ -257,11 +268,12 @@ sub _startswf
    my $flvinfo = shift;
 
    # SWF header
-   my $twp = 20;   # 20 twips per pixel
+   my $twp = 20;               # 20 twips per pixel
    my $swf = SWF::File->new(
       undef,
-      Version   => $flvinfo->{swfversion},
-      FrameSize => [0, 0, $twp * $flvinfo->{width}, $twp * $flvinfo->{height}],
+      Version => $flvinfo->{swfversion},
+      FrameSize =>
+          [0, 0, $twp * $flvinfo->{width}, $twp * $flvinfo->{height}],
       FrameRate => $flvinfo->{framerate},
    );
 
@@ -278,10 +290,10 @@ sub _startswf
    )->pack($swf);
 
    # Add the audio stream header
-   if (@{$flvinfo->{audtags}})
+   if (@{ $flvinfo->{audtags} })
    {
       my $tag = $flvinfo->{audtags}->[0];
-      (my $arate = $AUDIO_RATES{$tag->{rate}}) =~ s/\D//gxms;
+      (my $arate = $AUDIO_RATES{ $tag->{rate} }) =~ s/\D//gxms;
       SWF::Element::Tag::SoundStreamHead->new(
          StreamSoundCompression => $tag->{format},
          PlaybackSoundRate      => $tag->{rate},
@@ -295,15 +307,15 @@ sub _startswf
    }
 
    # Add the video stream header
-   if (@{$flvinfo->{vidtags}})
+   if (@{ $flvinfo->{vidtags} })
    {
       my $tag = $flvinfo->{vidtags}->[0];
       SWF::Element::Tag::DefineVideoStream->new(
          CharacterID => 1,
-         NumFrames   => scalar @{$flvinfo->{vidtags}},
+         NumFrames   => scalar @{ $flvinfo->{vidtags} },
          Width       => $flvinfo->{width},
          Height      => $flvinfo->{height},
-         VideoFlags  => 1,                               # Smoothing on
+         VideoFlags  => 1,                                 # Smoothing on
          CodecID     => $tag->{codec},
       )->pack($swf);
    }

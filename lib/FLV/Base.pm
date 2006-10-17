@@ -2,8 +2,9 @@ package FLV::Base;
 
 use warnings;
 use strict;
+use Data::Dumper;
 
-our $VERSION = '0.16';
+our $VERSION = '0.17';
 
 my $verbose = 0;
 
@@ -52,15 +53,23 @@ sub _get_info
    my $fields = shift;    # hashref
    my $tags   = shift;    # arrayref
 
+   my %complex;
    my %info = (count => scalar @{$tags});
    my %types = map { $_ => {} } keys %{$fields};
    for my $tag (@{$tags})
    {
       for my $field (keys %{$fields})
       {
-         if (defined $tag->{$field})
+         my $value = $tag->{$field};
+         if (defined $value)
          {
-            $types{$field}->{$tag->{$field}}++;
+            if (ref $value)
+            {
+               $value = q{\\} . Data::Dumper->Dump([$value], ['VAR']);
+               $complex{$value} = $tag->{$field};
+            }
+
+            $types{$field}->{$value}++;
          }
       }
    }
@@ -74,9 +83,23 @@ sub _get_info
       {
          @list = map { $lookup->{$_} } @list;
       }
-      $info{$field} = join q{/}, @list;
+      if (grep { m/\A\\/xms } @list)
+      {
+         $info{$field} = @list == 1 ? $complex{ $list[0] } : '<complex data>';
+      }
+      else
+      {
+         $info{$field} = join q{/}, @list;
+      }
    }
    return map { $prefix . q{_} . $_ => $info{$_} } keys %info;
+}
+
+# This is only meaningful for FLV::*Tag classes.  See FLV::Tag::parse()
+sub _pos
+{
+   my $self = shift;
+   return $self->{_pos};
 }
 
 1;

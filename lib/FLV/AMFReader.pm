@@ -7,7 +7,7 @@ use AMF::Perl::Util::Object;
 use AMF::Perl::IO::InputStream;
 use base 'AMF::Perl::IO::Deserializer';
 
-our $VERSION = '0.16';
+our $VERSION = '0.17';
 
 =for stopwords AMF Remoting
 
@@ -52,9 +52,8 @@ sub new
    my $pkg     = shift;
    my $content = shift;
 
-   return bless {
-      inputStream => AMF::Perl::IO::InputStream->new($content),
-   }, $pkg;
+   my $input_stream = AMF::Perl::IO::InputStream->new($content);
+   return bless { inputStream => $input_stream }, $pkg;
 }
 
 =item $self->read_flv_meta()
@@ -75,9 +74,8 @@ sub read_flv_meta
    my $self = shift;
 
    my @data;
-   eval
-   {
-      for my $iter (1..20)
+   eval {
+      for my $iter (1 .. 20)
       {
          my $type = $self->{inputStream}->readByte();
          push @data, $self->readData($type);
@@ -106,10 +104,9 @@ readMixedArray() method.
 
 =cut
 
-if (! __PACKAGE__->can('readMixedArray'))
+if (!__PACKAGE__->can('readMixedArray'))
 {
-   *readMixedArray = sub
-   {
+   *readMixedArray = sub {
       my ($self) = @_;
 
       # This length is actually unused!  How odd...
@@ -119,10 +116,9 @@ if (! __PACKAGE__->can('readMixedArray'))
       return $self->readObject();
    };
 
-   *readData = sub
-   {
+   *readData = sub {
       my ($self, $type) = @_;
-      
+
       if ($type == 8)
       {
          return $self->readMixedArray();

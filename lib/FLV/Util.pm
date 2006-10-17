@@ -1,10 +1,10 @@
-package FLV::Constants;
+package FLV::Util;
 
 use warnings;
 use strict;
 use base 'Exporter';
 
-our $VERSION = '0.16';
+our $VERSION = '0.17';
 
 our @EXPORT =    ## no critic(Modules::ProhibitAutomaticExportation)
     qw(
@@ -58,13 +58,40 @@ our %VIDEO_FRAME_TYPES = (
    3 => 'disposable interframe',
 );
 
+sub get_write_filehandle
+{
+   my $pkg     = shift;
+   my $outfile = shift;
+
+   # $OS_ERROR must be intact at the end
+
+   my $outfh;
+   if (ref $outfile)
+   {
+      $outfh = $outfile;
+   }
+   elsif ($outfile eq q{-})
+   {
+      $outfh = \*STDOUT;
+   }
+   elsif (!open $outfh, '>', $outfile)
+   {
+      $outfh = undef;
+   }
+   if ($outfh)
+   {
+      binmode $outfh;
+   }
+   return $outfh;
+}
+
 1;
 
 __END__
 
 =head1 NAME
 
-FLV::Constants - Flash video data
+FLV::Util - Flash video data and helper subroutines
 
 =head1 LICENSE
 
@@ -90,6 +117,21 @@ under the same terms as Perl itself.
 =item %VIDEO_CODEC_IDS
 
 =item %VIDEO_FRAME_TYPES
+
+=back
+
+=head1 METHODS
+
+=over
+
+=item $pkg->get_write_filehandle($outfile)
+
+Returns an open filehandle for writing, or C<undef>.  Possible inputs
+are a filehandle, a filename, or C<-> which is interpreted as
+C<STDOUT>.
+
+This method preserves any C<$!> or C<$OS_ERROR> set by the internal
+C<open()> call.
 
 =back
 

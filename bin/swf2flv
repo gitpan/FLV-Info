@@ -9,7 +9,7 @@ use Pod::Usage;
 use English qw(-no_match_vars);
 use FLV::FromSWF;
 
-our $VERSION = '0.16';
+our $VERSION = '0.17';
 
 my %opts = (
    skipframes => 1,
@@ -19,11 +19,12 @@ my %opts = (
 );
 
 Getopt::Long::Configure('bundling');
-GetOptions('s|skipframes=i' => \$opts{skipframes},
-           'v|verbose'      => \$opts{verbose},
-           'h|help'         => \$opts{help},
-           'V|version'      => \$opts{version},
-           ) or pod2usage(1);
+GetOptions(
+   's|skipframes=i' => \$opts{skipframes},
+   'v|verbose'      => \$opts{verbose},
+   'h|help'         => \$opts{help},
+   'V|version'      => \$opts{version},
+) or pod2usage(1);
 if ($opts{help})
 {
    pod2usage(-exitstatus => 0, -verbose => 2);
@@ -39,7 +40,7 @@ if (@ARGV < 2)
    pod2usage(1);
 }
 
-my $infile = shift;
+my $infile  = shift;
 my $outfile = shift;
 
 my $converter = FLV::FromSWF->new();

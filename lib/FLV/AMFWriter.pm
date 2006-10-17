@@ -7,7 +7,7 @@ use AMF::Perl::Util::Object;
 use AMF::Perl::IO::OutputStream;
 use base 'AMF::Perl::IO::Serializer';
 
-our $VERSION = '0.16';
+our $VERSION = '0.17';
 
 =for stopwords AMF Remoting
 
@@ -92,10 +92,9 @@ writeMixedArray() method.
 
 =cut
 
-if (! __PACKAGE__->can('writeMixedArray'))
+if (!__PACKAGE__->can('writeMixedArray'))
 {
-   *writeMixedArray = sub
-   {
+   *writeMixedArray = sub {
       my ($self, $d) = @_;
 
       $self->{out}->writeByte(8);    # type code
@@ -104,8 +103,7 @@ if (! __PACKAGE__->can('writeMixedArray'))
       return;
    };
 
-   *writeData = sub
-   {
+   *writeData = sub {
       my ($self, $d, $type) = @_;
 
       if (!$type && (ref $d) && (ref $d) =~ m/HASH/xms)
