@@ -2,6 +2,7 @@ package FLV::ToMP3;
 
 use warnings;
 use strict;
+use 5.008;
 
 use FLV::File;
 use FLV::Util;
@@ -9,7 +10,7 @@ use FLV::AudioTag;
 use English qw(-no_match_vars);
 use Carp;
 
-our $VERSION = '0.17';
+our $VERSION = '0.18';
 
 =for stopwords MP3 transcodes framerate
 
@@ -19,10 +20,7 @@ FLV::ToMP3 - Convert audio from a FLV file into an MP3 file
 
 =head1 LICENSE
 
-Copyright 2006 Clotho Advanced Media, Inc., <cpan@clotho.com>
-
-This library is free software; you can redistribute it and/or modify it
-under the same terms as Perl itself.
+See L<FLV::Info>
 
 =head1 SYNOPSIS
 
@@ -119,7 +117,7 @@ sub save
       next if (!$tag->isa('FLV::AudioTag'));
       print {$outfh} $tag->{data};
    }
-   close $outfh;
+   close $outfh or die 'Failed to finish writing file';
    return;
 }
 
@@ -131,8 +129,6 @@ __END__
 
 =head1 AUTHOR
 
-Clotho Advanced Media Inc., I<cpan@clotho.com>
-
-Primary developer: Chris Dolan
+See L<FLV::Info>
 
 =cut

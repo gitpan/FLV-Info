@@ -2,9 +2,17 @@
 use ExtUtils::MakeMaker;
 WriteMakefile
 (
-          'PL_FILES' => {},
-          'INSTALLDIRS' => 'site',
           'NAME' => 'FLV::Info',
+          'VERSION_FROM' => 'lib/FLV/Info.pm',
+          'PREREQ_PM' => {
+                           'AMF::Perl' => '0.15',
+                           'Digest::MD5' => '2',
+                           'List::Util' => '1',
+                           'Readonly' => '0',
+                           'SWF::File' => '0.033',
+                           'Test::More' => '0'
+                         },
+          'INSTALLDIRS' => 'site',
           'EXE_FILES' => [
                            'bin/flv2flv',
                            'bin/flv2mp3',
@@ -12,13 +20,6 @@ WriteMakefile
                            'bin/flvinfo',
                            'bin/swf2flv'
                          ],
-          'VERSION_FROM' => 'lib/FLV/Info.pm',
-          'PREREQ_PM' => {
-                           'Test::More' => 0,
-                           'List::Util' => '1',
-                           'AMF::Perl' => '0.15',
-                           'Digest::MD5' => '2',
-                           'SWF::File' => '0.033'
-                         }
+          'PL_FILES' => {}
         )
 ;

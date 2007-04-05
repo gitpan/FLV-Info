@@ -4,10 +4,12 @@ Module::Build->new(
    dist_author => 'Clotho Advanced Media, Inc. <cpan@clotho.com>',
    license => 'perl',
    requires => {
+      'perl'        => 5.008,
       'AMF::Perl'   => 0.15,
       'List::Util'  => 1.00,
       'Digest::MD5' => 2.00,
       'SWF::File'   => 0.033,
+      'Readonly'    => 0,
    },
    build_requires => {
       'Test::More'  => 0,

@@ -1,7 +1,10 @@
 package FLV::Body;
 
+## no critic(InputOutput::RequireCheckedClose)
+
 use warnings;
 use strict;
+use 5.008;
 use Carp;
 use English qw(-no_match_vars);
 use File::Temp qw();
@@ -13,9 +16,9 @@ use FLV::VideoTag;
 use FLV::AudioTag;
 use FLV::MetaTag;
 
-our $VERSION = '0.17';
+our $VERSION = '0.18';
 
-=for stopwords keyframe
+=for stopwords keyframe zeroth
 
 =head1 NAME
 
@@ -23,10 +26,7 @@ FLV::Body - Flash video file data structure
 
 =head1 LICENSE
 
-Copyright 2006 Clotho Advanced Media, Inc., <cpan@clotho.com>
-
-This library is free software; you can redistribute it and/or modify it
-under the same terms as Perl itself.
+See L<FLV::Info>
 
 =head1 METHODS
 
@@ -360,7 +360,7 @@ sub last_start_time
 =item $self->set_meta($key, $value, ...);
 
 These are convenience functions for interacting with an C<onMetadata>
-tag at time 0, which is a common convention in FLV files.  If the 0th
+tag at time 0, which is a common convention in FLV files.  If the zeroth
 tag is not an L<FLV::MetaTag> instance, one is created and prepended
 to the tag list.
 
@@ -455,8 +455,6 @@ __END__
 
 =head1 AUTHOR
 
-Clotho Advanced Media Inc., I<cpan@clotho.com>
-
-Primary developer: Chris Dolan
+See L<FLV::Info>
 
 =cut

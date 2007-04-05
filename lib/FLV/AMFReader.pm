@@ -2,12 +2,13 @@ package FLV::AMFReader;
 
 use warnings;
 use strict;
+use 5.008;
 
 use AMF::Perl::Util::Object;
 use AMF::Perl::IO::InputStream;
 use base 'AMF::Perl::IO::Deserializer';
 
-our $VERSION = '0.17';
+our $VERSION = '0.18';
 
 =for stopwords AMF Remoting
 
@@ -17,10 +18,7 @@ FLV::AMFReader - Wrapper for the AMF::Perl deserializer
 
 =head1 LICENSE
 
-Copyright 2006 Clotho Advanced Media, Inc., <cpan@clotho.com>
-
-This library is free software; you can redistribute it and/or modify it
-under the same terms as Perl itself.
+See L<FLV::Info>
 
 =head1 METHODS
 
@@ -138,8 +136,6 @@ __END__
 
 =head1 AUTHOR
 
-Clotho Advanced Media Inc., I<cpan@clotho.com>
-
-Primary developer: Chris Dolan
+See L<FLV::Info>
 
 =cut

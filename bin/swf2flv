@@ -4,12 +4,13 @@ package main;
 
 use warnings;
 use strict;
+use 5.008;
 use Getopt::Long;
 use Pod::Usage;
 use English qw(-no_match_vars);
 use FLV::FromSWF;
 
-our $VERSION = '0.17';
+our $VERSION = '0.18';
 
 my %opts = (
    skipframes => 1,
@@ -50,7 +51,7 @@ $converter->save($outfile);
 
 __END__
 
-=for stopwords SWF FLV MX swf2flv flv2swf file.swf file.flv transcode
+=for stopwords SWF FLV MX swf2flv flv2swf file.swf file.flv transcode Sorenson
 
 =head1 NAME
 

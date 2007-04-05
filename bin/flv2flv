@@ -4,13 +4,14 @@ package main;
 
 use warnings;
 use strict;
+use 5.008;
 use Getopt::Long;
 use Pod::Usage;
 use English qw(-no_match_vars);
 use FLV::File;
 use FLV::Util;
 
-our $VERSION = '0.17';
+our $VERSION = '0.18';
 
 my %opts = (
    verbose => 0,

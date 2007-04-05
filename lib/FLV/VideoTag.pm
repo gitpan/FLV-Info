@@ -2,6 +2,7 @@ package FLV::VideoTag;
 
 use warnings;
 use strict;
+use 5.008;
 use Carp;
 use English qw(-no_match_vars);
 
@@ -9,7 +10,7 @@ use base 'FLV::Base';
 
 use FLV::Util;
 
-our $VERSION = '0.17';
+our $VERSION = '0.18';
 
 =for stopwords codec
 
@@ -19,14 +20,11 @@ FLV::VideoTag - Flash video file data structure
 
 =head1 LICENSE
 
-Copyright 2006 Clotho Advanced Media, Inc., <cpan@clotho.com>
-
-This library is free software; you can redistribute it and/or modify it
-under the same terms as Perl itself.
+See L<FLV::Info>
 
 =head1 METHODS
 
-This is a subclass of FLV::Base.
+This is a subclass of L<FLV::Base>.
 
 =over
 
@@ -96,13 +94,13 @@ sub _parse_h263
       (ord pack 'B8', substr $bits, 57, 8),
    );
    my ($width, $height, $offset) =
-         $sizecode == '000' ? ($d[0], $d[1], 16)
-       : $sizecode == '001' ? ($d[0] * 256 + $d[1], $d[2] * 256 + $d[3], 32)
-       : $sizecode == '010' ? (352, 288, 0)
-       : $sizecode == '011' ? (176, 144, 0)
-       : $sizecode == '100' ? (128, 96,  0)
-       : $sizecode == '101' ? (320, 240, 0)
-       : $sizecode == '110' ? (160, 120, 0)
+         $sizecode eq '000' ? ($d[0], $d[1], 16)
+       : $sizecode eq '001' ? ($d[0] * 256 + $d[1], $d[2] * 256 + $d[3], 32)
+       : $sizecode eq '010' ? (352, 288, 0)
+       : $sizecode eq '011' ? (176, 144, 0)
+       : $sizecode eq '100' ? (128, 96,  0)
+       : $sizecode eq '101' ? (320, 240, 0)
+       : $sizecode eq '110' ? (160, 120, 0)
        :   die 'Illegal value for H.263 size code at byte ' . $pos;
 
    $self->{width}  = $width;
@@ -236,8 +234,6 @@ __END__
 
 =head1 AUTHOR
 
-Clotho Advanced Media Inc., I<cpan@clotho.com>
-
-Primary developer: Chris Dolan
+See L<FLV::Info>
 
 =cut

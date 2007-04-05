@@ -2,14 +2,15 @@ package FLV::Info;
 
 use warnings;
 use strict;
+use 5.008;
 use List::Util qw(max);
 use Data::Dumper;
 
 use FLV::File;
 
-our $VERSION = '0.17';
+our $VERSION = '0.18';
 
-=for stopwords FLVTool2 interframes keyframes FFmpeg SWFs FLVs SWF FLV codec
+=for stopwords FLVTool2 interframes keyframes FFmpeg SWFs FLVs SWF FLV codec MediaLandscape
 
 =head1 NAME
 
@@ -42,6 +43,8 @@ L<http://www.macromedia.com/licensing/developer/>
 =head1 LICENSE
 
 Copyright 2006 Clotho Advanced Media, Inc., <cpan@clotho.com>
+
+Copyright 2007 Chris Dolan, <cdolan@cpan.org>
 
 This library is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.
@@ -304,8 +307,10 @@ please contact me.
 
 =head1 AUTHOR
 
-Clotho Advanced Media Inc., I<cpan@clotho.com>
+Chris Dolan
 
-Primary developer: Chris Dolan
+This module was originally developed by me at Clotho Advanced Media
+Inc. as part of our MediaLandscape project.  Now I maintain it in my
+spare time.  I do not anticipate adding new features.
 
 =cut

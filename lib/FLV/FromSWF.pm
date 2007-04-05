@@ -2,6 +2,7 @@ package FLV::FromSWF;
 
 use warnings;
 use strict;
+use 5.008;
 
 use SWF::File;
 use SWF::Parser;
@@ -13,7 +14,7 @@ use FLV::VideoTag;
 use English qw(-no_match_vars);
 use Carp;
 
-our $VERSION = '0.17';
+our $VERSION = '0.18';
 
 =for stopwords SWF transcodes
 
@@ -23,10 +24,7 @@ FLV::FromSWF - Convert a SWF file into an FLV file
 
 =head1 LICENSE
 
-Copyright 2006 Clotho Advanced Media, Inc., <cpan@clotho.com>
-
-This library is free software; you can redistribute it and/or modify it
-under the same terms as Perl itself.
+See L<FLV::Info>
 
 =head1 SYNOPSIS
 
@@ -369,10 +367,16 @@ __END__
 
 =back
 
+=head1 CAVEATS
+
+Content in the SWF other than audio or video data is currently ignored
+silently.  I should add warning messages when significant
+non-audio/video content appears.  For example, I've seen some screen
+video which mixes video, bitmaps and shapes to optimize the SWF file
+size.  L<http://rt.cpan.org/Ticket/Display.html?id=22095>
+
 =head1 AUTHOR
 
-Clotho Advanced Media Inc., I<cpan@clotho.com>
-
-Primary developer: Chris Dolan
+See L<FLV::Info>
 
 =cut

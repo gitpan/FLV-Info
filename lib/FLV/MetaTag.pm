@@ -2,6 +2,7 @@ package FLV::MetaTag;
 
 use warnings;
 use strict;
+use 5.008;
 use Carp;
 use English qw(-no_match_vars);
 
@@ -11,7 +12,7 @@ use FLV::AMFReader;
 use FLV::AMFWriter;
 use FLV::Util;
 
-our $VERSION = '0.17';
+our $VERSION = '0.18';
 
 =for stopwords FLVTool2 AMF
 
@@ -21,10 +22,7 @@ FLV::MetaTag - Flash video file data structure
 
 =head1 LICENSE
 
-Copyright 2006 Clotho Advanced Media, Inc., <cpan@clotho.com>
-
-This library is free software; you can redistribute it and/or modify it
-under the same terms as Perl itself.
+See L<FLV::Info>
 
 =head1 DESCRIPTION
 
@@ -191,8 +189,6 @@ __END__
 
 =head1 AUTHOR
 
-Clotho Advanced Media Inc., I<cpan@clotho.com>
-
-Primary developer: Chris Dolan
+See L<FLV::Info>
 
 =cut

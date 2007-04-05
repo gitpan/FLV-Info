@@ -1,5 +1,11 @@
 Revision history for Perl module FLV::Info
 
+0.18  05 Apr 2007
+      [FIXES]
+      - Correction for audio codec in metadata output
+      [INTERNALS]
+      - Changed maintainer from CLOTHO@cpan.org to CDOLAN@cpan.org
+
 0.17  17 Oct 2006
       [ENHANCEMENTS]
       - Support for keyframe file position metadata

@@ -2,6 +2,7 @@ package FLV::Tag;
 
 use warnings;
 use strict;
+use 5.008;
 use Carp;
 use English qw(-no_match_vars);
 
@@ -12,7 +13,7 @@ use FLV::AudioTag;
 use FLV::VideoTag;
 use FLV::MetaTag;
 
-our $VERSION = '0.17';
+our $VERSION = '0.18';
 
 =for stopwords subtag
 
@@ -22,14 +23,11 @@ FLV::Tag - Flash video file data structure
 
 =head1 LICENSE
 
-Copyright 2006 Clotho Advanced Media, Inc., <cpan@clotho.com>
-
-This library is free software; you can redistribute it and/or modify it
-under the same terms as Perl itself.
+See L<FLV::Info>
 
 =head1 METHODS
 
-This is a subclass of FLV::Base.
+This is a subclass of L<FLV::Base>.
 
 =over
 
@@ -165,8 +163,6 @@ __END__
 
 =head1 AUTHOR
 
-Clotho Advanced Media Inc., I<cpan@clotho.com>
-
-Primary developer: Chris Dolan
+See L<FLV::Info>
 
 =cut
