@@ -13,7 +13,7 @@ use FLV::VideoTag;
 use English qw(-no_match_vars);
 use Carp;
 
-our $VERSION = '0.18';
+our $VERSION = '0.19';
 
 =for stopwords SWF transcodes framerate
 
@@ -112,7 +112,7 @@ sub save
    {
       my $vidtag = $flvinfo->{vidtags}->[$i];
       my $data   = $vidtag->{data};
-      if ($vidtag->{codec} == 4 || $vidtag->{codec} == 5)
+      if (4 == $vidtag->{codec} || 5 == $vidtag->{codec})
       {
 
          # On2 VP6 is different in FLV vs. SWF!
@@ -128,7 +128,7 @@ sub save
          VideoData => $data,
       )->pack($swf);
 
-      if ($i == 0)
+      if (0 == $i)
       {
          SWF::Element::Tag::PlaceObject2->new(
             Flags       => 22,    # matrix, tween ratio and characterID
@@ -161,7 +161,7 @@ sub save
    }
 
    # Save to disk
-   $swf->close($outfile eq q{-} ? \*STDOUT : $outfile);
+   $swf->close(q{-} eq $outfile ? \*STDOUT : $outfile);
 
    return;
 }

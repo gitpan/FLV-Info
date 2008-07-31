@@ -14,7 +14,7 @@ use FLV::VideoTag;
 use English qw(-no_match_vars);
 use Carp;
 
-our $VERSION = '0.18';
+our $VERSION = '0.19';
 
 =for stopwords SWF transcodes
 
@@ -79,8 +79,8 @@ sub parse_swf
    $self->{audiobytes}  = 0;
 
    my $parser = SWF::Parser->new(
-      header_callback => sub { $self->_header(@_); },
-      tag_callback    => sub { $self->_tag(@_); },
+      header_callback => sub { $self->_header(@_); }, ## no critic (Unpacking)
+      tag_callback    => sub { $self->_tag(@_); },    ## no critic (Unpacking)
    );
    $parser->parse_file($infile);
 
@@ -123,11 +123,10 @@ sub save
 
 sub _header
 {
-   my $self   = shift;
-   my $parser = shift;
+   my ($self, $parser, @r) = @_;
 
    my %header;
-   @header{qw(signature version filelen xmin ymin xmax ymax rate count)} = @_;
+   @header{qw(signature version filelen xmin ymin xmax ymax rate count)} = @r;
    $self->{header} = \%header;
 
    $self->{flv}->set_meta(framerate => $header{rate});
@@ -193,7 +192,7 @@ sub _audio_stream
    $self->{audiosize}  = ($streamflags >> 1) & 0x1;
    $self->{stereo}     = $streamflags & 0x1;
 
-   if ($self->{audiocodec} == 2 && $length > 4)
+   if (2 == $self->{audiocodec} && 4 < $length)
    {
       my ($latency) = unpack 'v', $stream->get_string(2);
 
@@ -212,7 +211,7 @@ sub _audio_block
    my $stream = shift;
    my $length = shift;
 
-   if ($length == 0)    # empty block
+   if (0 == $length)    # empty block
    {
       warn 'Skipping empty audio block';
       return;
@@ -228,9 +227,9 @@ sub _audio_block
    $audiotag->{size}   = $self->{audiosize};
    $audiotag->{type}   = $self->{stereo};
 
-   if ($self->{audiocodec} == 2)
+   if (2 == $self->{audiocodec})
    {
-      if ($length == 4)    # empty block
+      if (4 == $length)    # empty block
       {
          warn 'Skipping empty audio block';
          return;
@@ -246,10 +245,10 @@ sub _audio_block
 
       (my $rate = $AUDIO_RATES{ $self->{audiorate} }) =~ s/\D//gxms;
 
-      if ($self->{samples} == 0)
+      if (0 == $self->{samples})
       {
          my $frame = $self->{framenumber};
-         if ($frame == 1)
+         if (1 == $frame)
          {
 
             # Often audio skips one frame.
@@ -261,7 +260,7 @@ sub _audio_block
       }
 
       $millisec = 1000 * $self->{samples} / $rate;
-      if ($millisec > 4_000_000_000 || $millisec < 0)
+      if (4_000_000_000 < $millisec || 0 > $millisec)
       {
          warn 'Funny output timestamp: '
              . "$millisec ($self->{samples}, $samples, $rate)";
@@ -311,7 +310,7 @@ sub _video_frame
    my $stream = shift;
    my $length = shift;
 
-   if ($length == 0)    # empty block
+   if (0 == $length)    # empty block
    {
       warn 'Skipping empty video block';
       return;
@@ -327,18 +326,18 @@ sub _video_frame
 
    ## no critic(ControlStructures::ProhibitCascadingIfElse)
 
-   if ($self->{codec} == 2)
+   if (2 == $self->{codec})
    {
       $videotag->_parse_h263(0);
    }
-   elsif ($self->{codec} == 3 || $self->{codec} == 6)
+   elsif (3 == $self->{codec} || 6 == $self->{codec})
    {
 
       # zeroth frame is a key frame, all others are deltas.  Right???
       $videotag->_parse_screen_video(0);
       $videotag->{type} = $framenum ? 2 : 1;
    }
-   elsif ($self->{codec} == 4)
+   elsif (4 == $self->{codec})
    {
 
       # prepend pixel offsets present in FLV, but absent in SWF
@@ -346,7 +345,7 @@ sub _video_frame
       $videotag->{data} = $offset . $videotag->{data};
       $videotag->_parse_on2vp6(0);
    }
-   elsif ($self->{codec} == 5)
+   elsif (5 == $self->{codec})
    {
 
       # prepend pixel offsets present in FLV, but absent in SWF

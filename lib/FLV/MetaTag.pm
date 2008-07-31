@@ -12,7 +12,7 @@ use FLV::AMFReader;
 use FLV::AMFWriter;
 use FLV::Util;
 
-our $VERSION = '0.18';
+our $VERSION = '0.19';
 
 =for stopwords FLVTool2 AMF
 
@@ -87,8 +87,7 @@ Returns a hash of FLV metadata.  See FLV::Info for more details.
 
 sub get_info
 {
-   my $pkg  = shift;
-   my @tags = @_;
+   my ($pkg, @tags) = @_;
 
    my @records;
    my %keys;
@@ -155,8 +154,7 @@ sub get_value
 
 sub set_value
 {
-   my $self      = shift;
-   my @keyvalues = @_;
+   my ($self, @keyvalues) = @_;
 
    $self->{data} ||= [];
    if (@{ $self->{data} } < 2 || $self->{data}->[0] ne 'onMetaData')

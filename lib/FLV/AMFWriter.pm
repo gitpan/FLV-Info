@@ -8,13 +8,13 @@ use AMF::Perl::Util::Object;
 use AMF::Perl::IO::OutputStream;
 use base 'AMF::Perl::IO::Serializer';
 
-our $VERSION = '0.18';
+our $VERSION = '0.19';
 
 =for stopwords AMF Remoting
 
 =head1 NAME
 
-FLV::AMFReader - Wrapper for the AMF::Perl deserializer
+FLV::AMFWriter - Wrapper for the AMF::Perl serializer
 
 =head1 LICENSE
 
@@ -28,20 +28,15 @@ That class is optimized for Flash Remoting communications.  We are
 instead just interested in the protocol for the data payload of those
 messages, since that's all that FLV carries.
 
-So, this class is a hack.  We override the AMF::Perl::IO::Deserializer
-constructor so that it doesn't start parsing immediately.  Also, we
-pass it a string instead of an instantiated
-AMF::Perl::IO::InputStream.
-
-Also, as of this writing AMF::Perl was at v0.15, which lacked support
-for hashes.  So, we hack that in.  Hopefully we did it in a
-future-friendly way...
+So, this class is a hack.  As of this writing AMF::Perl was at v0.15,
+which lacked support for hashes.  So, we hack that in.  Hopefully we
+did it in a future-friendly way...
 
 =over
 
 =item $pkg->new($content)
 
-Creates a minimal AMF::Perl::IO::Deserializer instance.
+Creates a minimal AMF::Perl::IO::Serializer instance.
 
 =cut
 
@@ -60,8 +55,7 @@ Returns a byte string of serialized data
 
 sub write_flv_meta
 {
-   my $self = shift;
-   my @data = @_;
+   my ($self, @data) = @_;
 
    for my $d (@data)
    {
@@ -109,7 +103,7 @@ if (!__PACKAGE__->can('writeMixedArray'))
          $type = 'mixedarray';
       }
 
-      if ($type && $type eq 'mixedarray')
+      if ($type && 'mixedarray' eq $type)
       {
          $self->writeMixedArray($d);
       }

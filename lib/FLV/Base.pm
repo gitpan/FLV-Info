@@ -4,8 +4,9 @@ use warnings;
 use strict;
 use 5.008;
 use Data::Dumper;
+use List::MoreUtils qw(any);
 
-our $VERSION = '0.18';
+our $VERSION = '0.19';
 
 my $verbose = 0;
 
@@ -81,9 +82,9 @@ sub _get_info
       {
          @list = map { $lookup->{$_} } @list;
       }
-      if (grep { m/\A\\/xms } @list)
+      if (any { m/\A\\/xms } @list)
       {
-         $info{$field} = @list == 1 ? $complex{ $list[0] } : '<complex data>';
+         $info{$field} = 1 == @list ? $complex{ $list[0] } : '<complex data>';
       }
       else
       {

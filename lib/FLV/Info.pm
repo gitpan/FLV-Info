@@ -8,7 +8,7 @@ use Data::Dumper;
 
 use FLV::File;
 
-our $VERSION = '0.18';
+our $VERSION = '0.19';
 
 =for stopwords FLVTool2 interframes keyframes FFmpeg SWFs FLVs SWF FLV codec MediaLandscape
 
@@ -44,7 +44,7 @@ L<http://www.macromedia.com/licensing/developer/>
 
 Copyright 2006 Clotho Advanced Media, Inc., <cpan@clotho.com>
 
-Copyright 2007 Chris Dolan, <cdolan@cpan.org>
+Copyright 2007-2008 Chris Dolan, <cdolan@cpan.org>
 
 This library is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.
@@ -217,7 +217,7 @@ sub report
       # Append unit(s) if any
       if ($output->{u})
       {
-         $value .= q{ } . $output->{u} . ($value eq '1' ? q{} : 's');
+         $value .= q{ } . $output->{u} . ('1' eq $value ? q{} : 's');
       }
       elsif (ref $value)
       {

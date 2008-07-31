@@ -1,5 +1,11 @@
 Revision history for Perl module FLV::Info
 
+0.19  31 Jul 2008
+      [FIXES]
+      - Use binmode (speculative fix for RT#33284: Fails to install on Windows using Strawberry Perl Tag.pm line 87)
+      [STANDARDS]
+      - Comply with Perl::Critic v1.090
+
 0.18  05 Apr 2007
       [FIXES]
       - Correction for audio codec in metadata output

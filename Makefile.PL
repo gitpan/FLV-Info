@@ -7,6 +7,7 @@ WriteMakefile
           'PREREQ_PM' => {
                            'AMF::Perl' => '0.15',
                            'Digest::MD5' => '2',
+                           'List::MoreUtils' => '0',
                            'List::Util' => '1',
                            'Readonly' => '0',
                            'SWF::File' => '0.033',

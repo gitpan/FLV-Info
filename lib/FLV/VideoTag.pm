@@ -10,7 +10,7 @@ use base 'FLV::Base';
 
 use FLV::Util;
 
-our $VERSION = '0.18';
+our $VERSION = '0.19';
 
 =for stopwords codec
 
@@ -68,12 +68,12 @@ sub parse
 
    $self->{data} = $file->get_bytes($datasize - 1);
 
-   my $result =
-         $self->{codec} == 2 ? $self->_parse_h263($pos)
-       : $self->{codec} == 3 ? $self->_parse_screen_video($pos)
-       : $self->{codec} == 4 ? $self->_parse_on2vp6($pos)
-       : $self->{codec} == 5 ? $self->_parse_on2vp6_alpha($pos)
-       : $self->{codec} == 6 ? $self->_parse_screen_video($pos)
+   my $result
+       = 2 == $self->{codec} ? $self->_parse_h263($pos)
+       : 3 == $self->{codec} ? $self->_parse_screen_video($pos)
+       : 4 == $self->{codec} ? $self->_parse_on2vp6($pos)
+       : 5 == $self->{codec} ? $self->_parse_on2vp6_alpha($pos)
+       : 6 == $self->{codec} ? $self->_parse_screen_video($pos)
        :                       die 'Unknown video type';
 
    return;
@@ -93,14 +93,14 @@ sub _parse_h263
       (ord pack 'B8', substr $bits, 49, 8),
       (ord pack 'B8', substr $bits, 57, 8),
    );
-   my ($width, $height, $offset) =
-         $sizecode eq '000' ? ($d[0], $d[1], 16)
-       : $sizecode eq '001' ? ($d[0] * 256 + $d[1], $d[2] * 256 + $d[3], 32)
-       : $sizecode eq '010' ? (352, 288, 0)
-       : $sizecode eq '011' ? (176, 144, 0)
-       : $sizecode eq '100' ? (128, 96,  0)
-       : $sizecode eq '101' ? (320, 240, 0)
-       : $sizecode eq '110' ? (160, 120, 0)
+   my ($width, $height, $offset)
+       = '000' eq $sizecode ? ($d[0], $d[1], 16)
+       : '001' eq $sizecode ? ($d[0] * 256 + $d[1], $d[2] * 256 + $d[3], 32)
+       : '010' eq $sizecode ? (352, 288, 0)
+       : '011' eq $sizecode ? (176, 144, 0)
+       : '100' eq $sizecode ? (128, 96,  0)
+       : '101' eq $sizecode ? (320, 240, 0)
+       : '110' eq $sizecode ? (160, 120, 0)
        :   die 'Illegal value for H.263 size code at byte ' . $pos;
 
    $self->{width}  = $width;
@@ -108,7 +108,7 @@ sub _parse_h263
 
    my $typebits = substr $bits, 33 + $offset, 2;
    my @typebits = split m//xms, $typebits;
-   my $type = 1 + $typebits[0] * 2 + $typebits[1];
+   my $type     = 1 + $typebits[0] * 2 + $typebits[1];
    if (!defined $self->{type})
    {
       $self->{type} = $type;
@@ -154,7 +154,7 @@ sub _parse_on2vp6
       # keyframe from interframe
       # See: http://use.perl.org/~ChrisDolan/journal/30427
       my @bytes = unpack 'CC', $self->{data};
-      $self->{type} = ($bytes[1] & 0x80) == 0 ? 1 : 2;
+      $self->{type} = 0 == ($bytes[1] & 0x80) ? 1 : 2;
    }
 
    return;
@@ -171,7 +171,7 @@ sub _parse_on2vp6_alpha
       # Bit 7 of the header (after 32 bits of offset) distinguishes
       # keyframe from interframe
       my @bytes = unpack 'CCCCC', $self->{data};
-      $self->{type} = ($bytes[4] & 0x80) == 0 ? 1 : 2;
+      $self->{type} = 0 == ($bytes[4] & 0x80) ? 1 : 2;
    }
 
    return;
@@ -200,7 +200,7 @@ Returns a hash of FLV metadata.  See FLV::Info for more details.
 
 sub get_info
 {
-   my $pkg = shift;
+   my ($pkg, @args) = @_;
 
    return $pkg->_get_info(
       'video',
@@ -210,7 +210,7 @@ sub get_info
          width  => undef,
          height => undef,
       },
-      \@_
+      \@args
    );
 }
 
@@ -223,7 +223,7 @@ Returns a boolean.
 sub is_keyframe
 {
    my $self = shift;
-   return $self->{type} && $self->{type} == 1 ? 1 : undef;
+   return $self->{type} && 1 == $self->{type} ? 1 : undef;
 }
 
 1;

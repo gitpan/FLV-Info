@@ -12,7 +12,7 @@ use FLV::Body;
 use FLV::MetaTag;
 use FLV::Util;
 
-our $VERSION = '0.18';
+our $VERSION = '0.19';
 
 =for stopwords zeroth
 
@@ -73,7 +73,7 @@ sub parse
    $self->{filehandle} = undef;
    $self->{pos}        = 0;
 
-   eval {
+   my $eval_result = eval {
       if (ref $input)
       {
          $self->{filehandle} = $input;
@@ -81,8 +81,9 @@ sub parse
       else
       {
          $self->{filename} = $input;
+         ## no critic (RequireBriefOpen)
          open my $fh, '<', $self->{filename} or croak q{} . $OS_ERROR;
-         binmode $fh;
+         binmode $fh or croak 'Failed to set binary mode on file';
          $self->{filehandle} = $fh;
       }
 
@@ -91,8 +92,9 @@ sub parse
 
       $self->{body} = FLV::Body->new();
       $self->{body}->parse($self, $opts);    # might throw exception
+      1;
    };
-   if ($EVAL_ERROR)
+   if (!$eval_result)
    {
       die 'Failed to read FLV file: ' . $EVAL_ERROR;
    }
@@ -170,8 +172,8 @@ sub populate_meta    ## no critic(ProhibitExcessComplexity)
          }
       }
    }
-   my $duration =
-         $info{vidtags} > 1
+   my $duration
+       = 1 < $info{vidtags}
        ? $info{lasttime} * $info{vidtags} / ($info{vidtags} - 1)
        : 0;
 
@@ -186,7 +188,7 @@ sub populate_meta    ## no critic(ProhibitExcessComplexity)
       filesize        => 0,
    );
 
-   if ($duration > 0)
+   if (0 < $duration)
    {
       $meta{duration} = $duration;
       if ($info{vidbytes})
@@ -325,10 +327,10 @@ sub get_meta
 
 sub set_meta
 {
-   my $self = shift;
+   my ($self, @args) = @_;
 
    $self->{body} ||= FLV::Body->new();
-   $self->{body}->set_meta(@_);
+   $self->{body}->set_meta(@args);
    return;
 }
 

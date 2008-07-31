@@ -11,7 +11,7 @@ use Pod::Usage;
 use English qw(-no_match_vars);
 use Digest::MD5 qw(md5_hex);
 
-our $VERSION = '0.18';
+our $VERSION = '0.19';
 
 my %opts = (
    debug   => 0,
@@ -47,10 +47,10 @@ while (@ARGV > 0)
    my $filename = shift;
 
    my $i = FLV::Info->new();
-   eval { $i->parse($filename); };
-   my $err = $EVAL_ERROR;
-   if ($err)
+
+   if (!eval { $i->parse($filename); 1; })
    {
+      my $err = $EVAL_ERROR;
       if ($opts{debug})
       {
          require Data::Dumper;

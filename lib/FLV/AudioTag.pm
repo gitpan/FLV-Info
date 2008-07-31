@@ -10,7 +10,7 @@ use base 'FLV::Base';
 
 use FLV::Util;
 
-our $VERSION = '0.18';
+our $VERSION = '0.19';
 
 =head1 NAME
 
@@ -91,7 +91,7 @@ Returns a hash of FLV metadata.  See FLV::Info for more details.
 
 sub get_info
 {
-   my $pkg = shift;
+   my ($pkg, @args) = @_;
    return $pkg->_get_info(
       'audio',
       {
@@ -100,7 +100,7 @@ sub get_info
          size   => \%AUDIO_SIZES,
          type   => \%AUDIO_TYPES,
       },
-      \@_
+      \@args
    );
 }
 

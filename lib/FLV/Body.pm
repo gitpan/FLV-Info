@@ -1,7 +1,5 @@
 package FLV::Body;
 
-## no critic(InputOutput::RequireCheckedClose)
-
 use warnings;
 use strict;
 use 5.008;
@@ -16,7 +14,7 @@ use FLV::VideoTag;
 use FLV::AudioTag;
 use FLV::MetaTag;
 
-our $VERSION = '0.18';
+our $VERSION = '0.19';
 
 =for stopwords keyframe zeroth
 
@@ -153,7 +151,7 @@ sub _serialize_with_sizes
       print {$media_fh} pack 'V', $size;
       $pos += $size + 4;
    }
-   close $media_fh;
+   close $media_fh or warn 'Unexpected error closing filehandle';
 
    if (!$success)
    {
@@ -183,7 +181,7 @@ sub _serialize_with_sizes
 
    # Start with a (wrong) guess of zero bytes
    my ($meta_fh, $meta_filename) = File::Temp::tempfile();
-   close $meta_fh;
+   close $meta_fh or warn 'Unexpected error closing filehandle';
 
    my $tries = 0;
    while ($tries++ < 10)
@@ -207,7 +205,7 @@ sub _serialize_with_sizes
       {
          print {$try_fh} pack 'V', $size;
       }
-      close $try_fh;
+      close $try_fh or warn 'Unexpected error closing filehandle';
 
       # Clean up last try.  This try becomes "last try" for the next iteration
       unlink $meta_filename;
@@ -237,13 +235,14 @@ sub _copy_file_to_fh
    my $filename   = shift;
    my $filehandle = shift;
 
-   open my ($fh), '<', $filename or die 'Failed to open temporary file';
+   open my $fh, '<', $filename or die 'Failed to open temporary file';
+   binmode $fh or die 'Failed to set binary mode on file';
    my $buf;
    while (read $fh, $buf, 4096)
    {
       print {$filehandle} $buf;
    }
-   close $fh;
+   close $fh or warn 'Unexpected error closing filehandle';
    return;
 }
 
@@ -384,8 +383,7 @@ sub get_meta
 
 sub set_meta
 {
-   my $self      = shift;
-   my @keyvalues = @_;
+   my ($self, @keyvalues) = @_;
 
    $self->{tags} ||= [];
    my @metatags = grep { $_->isa('FLV::MetaTag') } @{ $self->{tags} };

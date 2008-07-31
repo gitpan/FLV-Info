@@ -3,12 +3,13 @@ package FLV::AMFReader;
 use warnings;
 use strict;
 use 5.008;
+use English qw(-no_match_vars);
 
 use AMF::Perl::Util::Object;
 use AMF::Perl::IO::InputStream;
 use base 'AMF::Perl::IO::Deserializer';
 
-our $VERSION = '0.18';
+our $VERSION = '0.19';
 
 =for stopwords AMF Remoting
 
@@ -72,6 +73,8 @@ sub read_flv_meta
    my $self = shift;
 
    my @data;
+   local $EVAL_ERROR = undef;
+   ## no critic (RequireCheckingReturnValueOfEval)
    eval {
       for my $iter (1 .. 20)
       {
@@ -117,7 +120,7 @@ if (!__PACKAGE__->can('readMixedArray'))
    *readData = sub {
       my ($self, $type) = @_;
 
-      if ($type == 8)
+      if (8 == $type)
       {
          return $self->readMixedArray();
       }

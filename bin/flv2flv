@@ -11,7 +11,7 @@ use English qw(-no_match_vars);
 use FLV::File;
 use FLV::Util;
 
-our $VERSION = '0.18';
+our $VERSION = '0.19';
 
 my %opts = (
    verbose => 0,
@@ -35,7 +35,7 @@ if ($opts{version})
    exit 0;
 }
 
-if (@ARGV < 2)
+if (2 > @ARGV)
 {
    pod2usage(1);
 }
@@ -44,7 +44,7 @@ my $infile  = shift || q{-};
 my $outfile = shift || q{-};
 
 my $flv = FLV::File->new();
-$flv->parse($infile eq q{-} ? \*STDIN : $infile);
+$flv->parse(q{-} eq $infile ? \*STDIN : $infile);
 $flv->populate_meta();
 
 my $outfh = FLV::Util->get_write_filehandle($outfile);

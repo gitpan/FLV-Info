@@ -5,7 +5,7 @@ use strict;
 use 5.008;
 use base 'Exporter';
 
-our $VERSION = '0.18';
+our $VERSION = '0.19';
 
 our @EXPORT =    ## no critic(Modules::ProhibitAutomaticExportation)
     qw(
@@ -66,12 +66,14 @@ sub get_write_filehandle
 
    # $OS_ERROR must be intact at the end
 
+   ## no critic(RequireBriefOpen)
+
    my $outfh;
    if (ref $outfile)
    {
       $outfh = $outfile;
    }
-   elsif ($outfile eq q{-})
+   elsif (q{-} eq $outfile)
    {
       $outfh = \*STDOUT;
    }

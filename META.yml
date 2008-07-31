@@ -1,6 +1,6 @@
 ---
 name: FLV-Info
-version: 0.18
+version: 0.19
 author:
   - 'Clotho Advanced Media, Inc. <cpan@clotho.com>'
 abstract: Extract metadata from Macromedia Flash Video files
@@ -10,6 +10,7 @@ resources:
 requires:
   AMF::Perl: 0.15
   Digest::MD5: 2
+  List::MoreUtils: 0
   List::Util: 1
   Readonly: 0
   SWF::File: 0.033
@@ -19,50 +20,50 @@ build_requires:
 provides:
   FLV::AMFReader:
     file: lib/FLV/AMFReader.pm
-    version: 0.18
+    version: 0.19
   FLV::AMFWriter:
     file: lib/FLV/AMFWriter.pm
-    version: 0.18
+    version: 0.19
   FLV::AudioTag:
     file: lib/FLV/AudioTag.pm
-    version: 0.18
+    version: 0.19
   FLV::Base:
     file: lib/FLV/Base.pm
-    version: 0.18
+    version: 0.19
   FLV::Body:
     file: lib/FLV/Body.pm
-    version: 0.18
+    version: 0.19
   FLV::File:
     file: lib/FLV/File.pm
-    version: 0.18
+    version: 0.19
   FLV::FromSWF:
     file: lib/FLV/FromSWF.pm
-    version: 0.18
+    version: 0.19
   FLV::Header:
     file: lib/FLV/Header.pm
-    version: 0.18
+    version: 0.19
   FLV::Info:
     file: lib/FLV/Info.pm
-    version: 0.18
+    version: 0.19
   FLV::MetaTag:
     file: lib/FLV/MetaTag.pm
-    version: 0.18
+    version: 0.19
   FLV::Tag:
     file: lib/FLV/Tag.pm
-    version: 0.18
+    version: 0.19
   FLV::ToMP3:
     file: lib/FLV/ToMP3.pm
-    version: 0.18
+    version: 0.19
   FLV::ToSWF:
     file: lib/FLV/ToSWF.pm
-    version: 0.18
+    version: 0.19
   FLV::Util:
     file: lib/FLV/Util.pm
-    version: 0.18
+    version: 0.19
   FLV::VideoTag:
     file: lib/FLV/VideoTag.pm
-    version: 0.18
-generated_by: Module::Build version 0.2806
+    version: 0.19
+generated_by: Module::Build version 0.2808
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.2.html
   version: 1.2

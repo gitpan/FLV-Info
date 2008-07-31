@@ -13,7 +13,7 @@ use FLV::AudioTag;
 use FLV::VideoTag;
 use FLV::MetaTag;
 
-our $VERSION = '0.18';
+our $VERSION = '0.19';
 
 =for stopwords subtag
 
@@ -60,7 +60,7 @@ sub parse
 
    my $content = $file->get_bytes(11);
 
-   my ($type, @datasize, @timestamp, $reserved);
+   my ($type, @datasize, @timestamp);
    (
       $type,         $datasize[0],  $datasize[1],  $datasize[2],
       $timestamp[1], $timestamp[2], $timestamp[3], $timestamp[0]

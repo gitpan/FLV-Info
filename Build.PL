@@ -7,6 +7,7 @@ Module::Build->new(
       'perl'        => 5.008,
       'AMF::Perl'   => 0.15,
       'List::Util'  => 1.00,
+      'List::MoreUtils'  => 0,
       'Digest::MD5' => 2.00,
       'SWF::File'   => 0.033,
       'Readonly'    => 0,
@@ -20,5 +21,6 @@ Module::Build->new(
                     'bin/flv2flv',
                     'bin/flv2mp3'],
    add_to_cleanup => [ 'FLV-Info-*' ],
+   create_readme => 1,
    create_makefile_pl => 'traditional',
 )->create_build_script;

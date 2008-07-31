@@ -55,8 +55,8 @@ for my $sample (@samples)
    is($newflv->get_meta('filesize'), -s $tempfilename, 'meta filesize');
    is_deeply($newflv->get_meta('keyframes')->{filepositions},
              [map {$_->_pos()} @keyframes], 'meta keyframe positions');
-   is_deeply($newflv->get_meta('keyframes')->{times},
-             [map {0.001*$_->{start}} @keyframes], 'meta keyframe times');
+   is_deeply([map {sprintf '%.03f', $_} @{$newflv->get_meta('keyframes')->{times}}],
+             [map {sprintf '%.03f', 0.001*$_->{start}} @keyframes], 'meta keyframe times');
              
    my $reader = FLV::Info->new();
    $reader->parse($tempfilename);
