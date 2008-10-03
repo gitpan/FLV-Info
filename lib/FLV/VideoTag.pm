@@ -10,7 +10,7 @@ use base 'FLV::Base';
 
 use FLV::Util;
 
-our $VERSION = '0.19';
+our $VERSION = '0.20';
 
 =for stopwords codec
 

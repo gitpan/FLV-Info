@@ -1,5 +1,11 @@
 Revision history for Perl module FLV::Info
 
+0.20  02 Oct 2008
+      [FIXES]
+      - Spurious test failures because I relied on English in warning messages
+        (IMACAT via http://www.nntp.perl.org/group/perl.cpan.testers/2008/08/msg1971646.html)
+        (why do I keep making this same mistake???)
+
 0.19  31 Jul 2008
       [FIXES]
       - Use binmode (speculative fix for RT#33284: Fails to install on Windows using Strawberry Perl Tag.pm line 87)

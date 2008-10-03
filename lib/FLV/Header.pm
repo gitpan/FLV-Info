@@ -7,7 +7,7 @@ use Carp;
 
 use base 'FLV::Base';
 
-our $VERSION = '0.19';
+our $VERSION = '0.20';
 
 =for stopwords FLVTool2
 

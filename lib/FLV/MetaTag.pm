@@ -12,7 +12,7 @@ use FLV::AMFReader;
 use FLV::AMFWriter;
 use FLV::Util;
 
-our $VERSION = '0.19';
+our $VERSION = '0.20';
 
 =for stopwords FLVTool2 AMF
 

@@ -8,7 +8,7 @@ use Data::Dumper;
 
 use FLV::File;
 
-our $VERSION = '0.19';
+our $VERSION = '0.20';
 
 =for stopwords FLVTool2 interframes keyframes FFmpeg SWFs FLVs SWF FLV codec MediaLandscape
 

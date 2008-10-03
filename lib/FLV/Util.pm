@@ -5,7 +5,7 @@ use strict;
 use 5.008;
 use base 'Exporter';
 
-our $VERSION = '0.19';
+our $VERSION = '0.20';
 
 our @EXPORT =    ## no critic(Modules::ProhibitAutomaticExportation)
     qw(

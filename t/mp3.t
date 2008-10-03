@@ -28,7 +28,7 @@ my @cleanup;
 {
    my $converter = FLV::ToMP3->new();
    eval { $converter->parse_flv('nosuchfile.flv'); };
-   like($@, qr/No such file or directory/, 'ToMP3 parse non-existent file');
+   like($@, qr/Failed to read FLV file/, 'ToMP3 parse non-existent file');
 
    eval { $converter->save(File::Spec->catfile('nosuchdir/file.mp3')); };
    like($@, qr/No audio data/, 'ToMP3 empty FLV');
@@ -39,7 +39,7 @@ my @cleanup;
 
    $converter->{flv}->set_meta(audiocodecid => 2); # hack
    eval { $converter->save(File::Spec->catfile('nosuchdir/file.mp3')); };
-   like($@, qr/No such file or directory/, 'ToMP3 impossible output filename');
+   like($@, qr/Failed to write MP3 file/, 'ToMP3 impossible output filename');
 }
 
 for my $sample (@samples)

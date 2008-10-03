@@ -59,7 +59,7 @@ END
 {
    my $reader = FLV::Info->new();
    eval { $reader->parse('nosuchfile.flv'); };
-   like($@, qr/No such file or directory/, 'parse non-existent file');
+   like($@, qr/Failed to read FLV file/, 'parse non-existent file');
 
    my ($fh, $tempfilename) = tempfile();
    die if (! -f $tempfilename);

@@ -34,7 +34,7 @@ my @cleanup;
 {
    my $converter = FLV::FromSWF->new();
    eval { $converter->parse_swf('nosuchfile.swf'); };
-   like($@, qr/No such file or directory/, 'FromSWF parse non-existent file');
+   like($@, qr/Can't open/, 'FromSWF parse non-existent file');
 
    eval { $converter->save(File::Spec->catfile('nosuchdir/file.flv')); };
    like($@, qr/Failed to write/, 'FromSWF impossible output filename');
@@ -107,10 +107,10 @@ for my $sample (@samples)
 {
    my $converter = FLV::ToSWF->new();
    eval { $converter->parse_flv('nosuchfile.flv'); };
-   like($@, qr/No such file or directory/, 'ToSWF parse non-existent file');
+   like($@, qr/Failed to read FLV file/, 'ToSWF parse non-existent file');
 
    eval { $converter->save(File::Spec->catfile('nosuchdir/file.swf')); };
-   like($@, qr/No such file or directory/, 'ToSWF impossible output filename');
+   like($@, qr/Can't open/, 'ToSWF impossible output filename');
 }
 
 for my $sample (@samples)
