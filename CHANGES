@@ -1,5 +1,12 @@
 Revision history for Perl module FLV::Info
 
+0.21  03 Oct 2008
+      [FIXES]
+      - Yet another Win32 binmode fix
+        (Taro Nishino via http://www.nntp.perl.org/group/perl.cpan.testers/2008/10/msg2368067.html)
+      [STANDARDS]
+      - Comply with Perl::Critic v1.093
+
 0.20  02 Oct 2008
       [FIXES]
       - Spurious test failures because I relied on English in warning messages

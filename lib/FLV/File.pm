@@ -12,7 +12,7 @@ use FLV::Body;
 use FLV::MetaTag;
 use FLV::Util;
 
-our $VERSION = '0.20';
+our $VERSION = '0.21';
 
 =for stopwords zeroth
 

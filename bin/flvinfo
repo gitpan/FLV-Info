@@ -11,7 +11,7 @@ use Pod::Usage;
 use English qw(-no_match_vars);
 use Digest::MD5 qw(md5_hex);
 
-our $VERSION = '0.20';
+our $VERSION = '0.21';
 
 my %opts = (
    debug   => 0,

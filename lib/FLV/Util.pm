@@ -4,8 +4,9 @@ use warnings;
 use strict;
 use 5.008;
 use base 'Exporter';
+use Readonly;
 
-our $VERSION = '0.20';
+our $VERSION = '0.21';
 
 our @EXPORT =    ## no critic(Modules::ProhibitAutomaticExportation)
     qw(
@@ -18,42 +19,42 @@ our @EXPORT =    ## no critic(Modules::ProhibitAutomaticExportation)
     %VIDEO_FRAME_TYPES
 );
 
-our %TAG_CLASSES = (
+Readonly::Hash our %TAG_CLASSES => (
    8  => 'FLV::AudioTag',
    9  => 'FLV::VideoTag',
    18 => 'FLV::MetaTag',
 );
 
-our %AUDIO_FORMATS = (
+Readonly::Hash our %AUDIO_FORMATS => (
    0 => 'uncompressed',
    1 => 'ADPCM',
    2 => 'MP3',
    5 => 'Nellymoser 8kHz mono',
    6 => 'Nellymoser',
 );
-our %AUDIO_RATES = (
+Readonly::Hash our %AUDIO_RATES => (
    0 => '5518 Hz',
    1 => '11025 Hz',
    2 => '22050 Hz',
    3 => '44100 Hz',
 );
-our %AUDIO_SIZES = (
+Readonly::Hash our %AUDIO_SIZES => (
    0 => '8 bit',
    1 => '16 bit',
 );
-our %AUDIO_TYPES = (
+Readonly::Hash our %AUDIO_TYPES => (
    0 => 'mono',
    1 => 'stereo',
 );
 
-our %VIDEO_CODEC_IDS = (
+Readonly::Hash our %VIDEO_CODEC_IDS => (
    2 => 'Sorenson H.263',
    3 => 'Screen video',
    4 => 'On2 VP6',
    5 => 'On2 VP6 + alpha',
    6 => 'Screen video v2',
 );
-our %VIDEO_FRAME_TYPES = (
+Readonly::Hash our %VIDEO_FRAME_TYPES => (
    1 => 'keyframe',
    2 => 'interframe',
    3 => 'disposable interframe',

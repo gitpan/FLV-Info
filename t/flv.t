@@ -182,6 +182,7 @@ for my $sample (@samples)
    is_deeply($newflv, $flv, 'compare re-serialized');
    # read it again, this time via filehandle
    open my $fh2, '<', $tempfilename or die;
+   binmode $fh2 or die;
    $rereader->parse($fh2);
    close $fh2;
    is_deeply($newflv, $flv, 'compare re-serialized');
