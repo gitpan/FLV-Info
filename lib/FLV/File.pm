@@ -12,7 +12,7 @@ use FLV::Body;
 use FLV::MetaTag;
 use FLV::Util;
 
-our $VERSION = '0.21';
+our $VERSION = '0.22';
 
 =for stopwords zeroth
 
@@ -123,8 +123,8 @@ sub populate_meta    ## no critic(ProhibitExcessComplexity)
       audtags       => 0,
       vidbytes      => 0,
       audbytes      => 0,
-      lasttime      => 0,
-      keyframetimes => [],
+      lasttime      => 0,     # millisec
+      keyframetimes => [],    # millisec
    );
 
    my $invalid = '-1';
@@ -134,7 +134,7 @@ sub populate_meta    ## no critic(ProhibitExcessComplexity)
       {
          $info{vidtags}++;
          $info{vidbytes} += length $tag->{data};
-         my $time = 0.001 * $tag->{start};
+         my $time = $tag->get_time;
          if ($info{lasttime} < $time)
          {
             $info{lasttime} = $time;
@@ -172,9 +172,10 @@ sub populate_meta    ## no critic(ProhibitExcessComplexity)
          }
       }
    }
+   my $lasttime = $info{lasttime} * 0.001;
    my $duration
        = 1 < $info{vidtags}
-       ? $info{lasttime} * $info{vidtags} / ($info{vidtags} - 1)
+       ? $lasttime * $info{vidtags} / ($info{vidtags} - 1)
        : 0;
 
    my $audrate = defined $info{audrate}
@@ -227,13 +228,16 @@ sub populate_meta    ## no critic(ProhibitExcessComplexity)
    {
       $meta{height} = $info{vidheight};
    }
-   if (defined $info{lasttime})
+   if ($lasttime)
    {
-      $meta{lasttimestamp} = $info{lasttime};
+      $meta{lasttimestamp} = $lasttime;
    }
    if (@{ $info{keyframetimes} })
    {
-      $meta{keyframes} = { times => $info{keyframetimes} };
+      $meta{keyframes} = {
+         times => [map { $_ * 0.001 } @{ $info{keyframetimes} }],
+         millis => $info{keyframetimes},
+      };
    }
 
    $self->set_meta(%meta);

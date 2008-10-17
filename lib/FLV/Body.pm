@@ -14,7 +14,7 @@ use FLV::VideoTag;
 use FLV::AudioTag;
 use FLV::MetaTag;
 
-our $VERSION = '0.21';
+our $VERSION = '0.22';
 
 =for stopwords keyframe zeroth
 

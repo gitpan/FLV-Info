@@ -13,7 +13,7 @@ use FLV::VideoTag;
 use English qw(-no_match_vars);
 use Carp;
 
-our $VERSION = '0.21';
+our $VERSION = '0.22';
 
 =for stopwords SWF transcodes framerate
 
@@ -78,13 +78,21 @@ sub parse_flv
    $self->{flv}->parse($infile);
    $self->{flv}->populate_meta();
 
-   my $acodec = $self->{flv}->get_meta('audiocodecid') || 0;
-   if ($acodec != 2)
+   $self->_validate();
+
+   return;
+}
+
+sub _validate
+{
+   my $self = shift;
+
+   my $acodec = $self->{flv}->get_meta('audiocodecid');
+   if (defined $acodec && $acodec != 2)
    {
-      die "$AUDIO_FORMATS{$acodec} not supported yet; "
+      die "Audio format $AUDIO_FORMATS{$acodec} not supported; "
           . "only MP3 audio allowed\n";
    }
-
    return;
 }
 

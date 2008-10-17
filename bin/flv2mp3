@@ -10,7 +10,7 @@ use Pod::Usage;
 use English qw(-no_match_vars);
 use FLV::ToMP3;
 
-our $VERSION = '0.21';
+our $VERSION = '0.22';
 
 my %opts = (
    verbose => 0,

@@ -6,7 +6,7 @@ use 5.008;
 use base 'Exporter';
 use Readonly;
 
-our $VERSION = '0.21';
+our $VERSION = '0.22';
 
 our @EXPORT =    ## no critic(Modules::ProhibitAutomaticExportation)
     qw(
@@ -26,11 +26,18 @@ Readonly::Hash our %TAG_CLASSES => (
 );
 
 Readonly::Hash our %AUDIO_FORMATS => (
-   0 => 'uncompressed',
-   1 => 'ADPCM',
-   2 => 'MP3',
-   5 => 'Nellymoser 8kHz mono',
-   6 => 'Nellymoser',
+   0  => 'uncompressed',
+   1  => 'ADPCM',
+   2  => 'MP3',
+   3  => 'Linear PCM, little endian',
+   4  => 'Nellymoser 16kHz mono',
+   5  => 'Nellymoser 8kHz mono',
+   6  => 'Nellymoser',
+   7  => 'G.711 A-law',
+   8  => 'G.711 mu-law',
+   10 => 'AAC',
+   14 => 'MP3 8kHz',
+   15 => 'Device-specific sound',
 );
 Readonly::Hash our %AUDIO_RATES => (
    0 => '5518 Hz',
@@ -48,16 +55,20 @@ Readonly::Hash our %AUDIO_TYPES => (
 );
 
 Readonly::Hash our %VIDEO_CODEC_IDS => (
+   1 => 'JPEG',
    2 => 'Sorenson H.263',
    3 => 'Screen video',
    4 => 'On2 VP6',
    5 => 'On2 VP6 + alpha',
    6 => 'Screen video v2',
+   7 => 'AVC',
 );
 Readonly::Hash our %VIDEO_FRAME_TYPES => (
    1 => 'keyframe',
    2 => 'interframe',
    3 => 'disposable interframe',
+   4 => 'generated keyframe',
+   5 => 'video info/command frame',
 );
 
 sub get_write_filehandle

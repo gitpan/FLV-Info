@@ -10,7 +10,7 @@ use base 'FLV::Base';
 
 use FLV::Util;
 
-our $VERSION = '0.21';
+our $VERSION = '0.22';
 
 =for stopwords codec
 
@@ -224,6 +224,18 @@ sub is_keyframe
 {
    my $self = shift;
    return $self->{type} && 1 == $self->{type} ? 1 : undef;
+}
+
+=item $self->get_time()
+
+Returns the time in milliseconds for this tag.
+
+=cut
+
+sub get_time
+{
+   my $self = shift;
+   return $self->{start};
 }
 
 1;

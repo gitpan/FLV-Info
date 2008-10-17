@@ -8,13 +8,13 @@ use Data::Dumper;
 
 use FLV::File;
 
-our $VERSION = '0.21';
+our $VERSION = '0.22';
 
 =for stopwords FLVTool2 interframes keyframes FFmpeg SWFs FLVs SWF FLV codec MediaLandscape
 
 =head1 NAME
 
-FLV::Info - Extract metadata from Macromedia Flash Video files
+FLV::Info - Extract metadata from Adobe Flash Video files
 
 =head1 SYNOPSIS
 
@@ -27,18 +27,16 @@ FLV::Info - Extract metadata from Macromedia Flash Video files
 
 =head1 DESCRIPTION
 
-This module reads Macromedia Flash Video (FLV) files and reports metadata about
+This module reads Adobe Flash Video (FLV) files and reports metadata about
 those files.
 
 =head1 LEGAL
 
 This work is based primarily on the file specification provided by
-Macromedia.  Use of that specification is governed by terms indicated
-at the licensing URL specified below.
+Adobe.  Use of that specification is governed by terms indicated at
+the licensing URL specified below.
 
-L<http://download.macromedia.com/pub/flash/flash_file_format_specification.pdf>
-
-L<http://www.macromedia.com/licensing/developer/>
+L<http://www.adobe.com/devnet/flv/>
 
 =head1 LICENSE
 
@@ -48,27 +46,6 @@ Copyright 2007-2008 Chris Dolan, <cdolan@cpan.org>
 
 This library is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.
-
-=head1 QUALITY
-
-We care about code quality.  The FLV-Info distribution complies with
-the following quality metrics:
-
-=over
-
-=item * Perl::Critic v0.21 passes
-
-=item * Devel::Cover test coverage almost 90%
-
-=item * Pod::Coverage at 100%
-
-=item * Test::Spelling passes
-
-=item * Test::Portability::Files passes
-
-=item * Test::Kwalitee passes
-
-=back
 
 =head1 METHODS
 
@@ -287,9 +264,9 @@ AMF::Perl to parse FLV meta tags.
 =item FFmpeg
 
 FFmpeg is a powerful media conversion utility.  It is capable of
-reading and writing FLVs and SWFs.  However as of this writing, I
-believe it does not support fast transcoding between FLV and SWF
-formats.
+reading and writing FLVs and SWFs.  However as of this writing (2006),
+I believe it does not support fast transcoding between FLV and SWF
+formats.  Please correct me if I'm mistaken.
 
 L<http://ffmpeg.mplayerhq.hu/>
 
@@ -312,5 +289,22 @@ Chris Dolan
 This module was originally developed by me at Clotho Advanced Media
 Inc. as part of our MediaLandscape project.  Now I maintain it in my
 spare time.  I do not anticipate adding new features.
+
+=head1 QUALITY
+
+I care about code quality.  The FLV-Info distribution complies with
+the following quality metrics:
+
+=over
+
+=item * Perl::Critic v1.093 passes
+
+=item * Devel::Cover test coverage almost 90%
+
+=item * Pod::Coverage at 100%
+
+=item * Test::Spelling passes
+
+=back
 
 =cut

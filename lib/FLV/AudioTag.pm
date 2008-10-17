@@ -10,7 +10,7 @@ use base 'FLV::Base';
 
 use FLV::Util;
 
-our $VERSION = '0.21';
+our $VERSION = '0.22';
 
 =head1 NAME
 
@@ -102,6 +102,18 @@ sub get_info
       },
       \@args
    );
+}
+
+=item $self->get_time()
+
+Returns the time in milliseconds for this tag.
+
+=cut
+
+sub get_time
+{
+   my $self = shift;
+   return $self->{start};
 }
 
 1;

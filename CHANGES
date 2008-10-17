@@ -1,5 +1,12 @@
 Revision history for Perl module FLV::Info
 
+0.22  16 Oct 2008
+      [ENHANCEMENTS]
+      - Added FLV::Cut and bin/flvcut, which trim FLV content by time
+        Idea from http://www.cpanforum.com/threads/8165
+      [DOCUMENTATION]
+      - Fix FLV spec URL
+
 0.21  03 Oct 2008
       [FIXES]
       - Yet another Win32 binmode fix

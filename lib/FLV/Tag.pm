@@ -13,7 +13,7 @@ use FLV::AudioTag;
 use FLV::VideoTag;
 use FLV::MetaTag;
 
-our $VERSION = '0.21';
+our $VERSION = '0.22';
 
 =for stopwords subtag
 
