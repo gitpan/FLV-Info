@@ -10,7 +10,7 @@ use FLV::AudioTag;
 use English qw(-no_match_vars);
 use Carp;
 
-our $VERSION = '0.22';
+our $VERSION = '0.24';
 
 =for stopwords MP3 transcodes framerate
 

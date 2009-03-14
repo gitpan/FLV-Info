@@ -11,7 +11,7 @@ use English qw(-no_match_vars);
 use Carp;
 use Readonly;
 
-our $VERSION = '0.22';
+our $VERSION = '0.24';
 
 =for stopwords FLVs undef keyframes keyframe
 

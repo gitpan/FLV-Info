@@ -6,7 +6,7 @@ use 5.008;
 use base 'Exporter';
 use Readonly;
 
-our $VERSION = '0.22';
+our $VERSION = '0.24';
 
 our @EXPORT =    ## no critic(Modules::ProhibitAutomaticExportation)
     qw(
@@ -36,6 +36,7 @@ Readonly::Hash our %AUDIO_FORMATS => (
    7  => 'G.711 A-law',
    8  => 'G.711 mu-law',
    10 => 'AAC',
+   11 => 'Speex',
    14 => 'MP3 8kHz',
    15 => 'Device-specific sound',
 );

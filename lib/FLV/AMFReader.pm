@@ -9,7 +9,7 @@ use AMF::Perl::Util::Object;
 use AMF::Perl::IO::InputStream;
 use base 'AMF::Perl::IO::Deserializer';
 
-our $VERSION = '0.22';
+our $VERSION = '0.24';
 
 =for stopwords AMF Remoting
 

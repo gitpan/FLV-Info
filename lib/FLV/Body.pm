@@ -9,12 +9,13 @@ use File::Temp qw();
 
 use base 'FLV::Base';
 
+use FLV::Header;
 use FLV::Tag;
 use FLV::VideoTag;
 use FLV::AudioTag;
 use FLV::MetaTag;
 
-our $VERSION = '0.22';
+our $VERSION = '0.24';
 
 =for stopwords keyframe zeroth
 
@@ -77,6 +78,21 @@ TAGS:
    } @tags;
    $self->{tags} = \@tags;
    return;
+}
+
+=item $self->clone()
+
+Create an independent copy of this instance.
+
+=cut
+
+sub clone
+{
+   my $self = shift;
+
+   my $copy = FLV::Body->new;
+   $copy->{tags} = [ map { $_->clone } @{$self->{tags}} ];
+   return $copy;
 }
 
 =item $self->serialize($filehandle)
@@ -282,7 +298,24 @@ sub get_tags
 {
    my $self = shift;
 
-   return @{ $self->{tags} };
+   return @{ $self->{tags} || [] };
+}
+
+=item $self->set_tags(@tags)
+
+Replace all of the existing tags with new ones.  For example, you can
+remove all audio from a movie like so:
+
+  $body->set_tags(grep {!$_->isa('FLV::AudioTag')} $body->get_tags);
+
+=cut
+
+sub set_tags
+{
+   my $self = shift;
+   my @tags = @_;
+   $self->{tags} = \@tags;
+   return;
 }
 
 =item $self->get_video_frames()
@@ -443,6 +476,31 @@ sub merge_meta
    # Insert a new metatag
    $self->set_meta(%meta);
    return;
+}
+
+=item $self->make_header()
+
+Create a new header from the body data.
+
+=cut
+
+sub make_header
+{
+   my $self = shift;
+   my $header = FLV::Header->new;
+
+   for my $tag (@{$self->{tags}})
+   {
+      if ($tag->isa('FLV::VideoTag'))
+      {
+         $header->{has_video} = 1;
+      }
+      elsif ($tag->isa('FLV::AudioTag'))
+      {
+         $header->{has_audio} = 1;
+      }
+   }
+   return $header;
 }
 
 1;

@@ -10,7 +10,7 @@ use Pod::Usage;
 use English qw(-no_match_vars);
 use FLV::Cut;
 
-our $VERSION = '0.22';
+our $VERSION = '0.24';
 
 my %opts = (
    keyframes => 0,
@@ -108,7 +108,7 @@ sub _round_to_keyframe
 
 __END__
 
-=for stopwords FLV flv2flv in.flv out.flv inms:outms flvcut
+=for stopwords FLV flv2flv flvsplice in.flv out.flv inms:outms flvcut
 
 =head1 NAME
 
@@ -142,6 +142,8 @@ the clip.
 =head1 SEE ALSO
 
 flv2flv
+
+flvsplice
 
 L<FLV::Cut>
 

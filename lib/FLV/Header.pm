@@ -7,7 +7,7 @@ use Carp;
 
 use base 'FLV::Base';
 
-our $VERSION = '0.22';
+our $VERSION = '0.24';
 
 =for stopwords FLVTool2
 
@@ -24,6 +24,39 @@ See L<FLV::Info>
 This is a subclass of FLV::Base.
 
 =over
+
+=item FLV::Header->new()
+
+Create a new instance.
+
+=item FLV::Header->create_from_body($body)
+
+Given an FLV::Body instance, construct a new header.
+
+=cut
+
+sub create_from_body
+{
+   my $pkg  = shift;
+   my $body = shift || croak 'no body specified';
+
+   my $header = $pkg->new;
+
+   for my $tag ($body->get_tags)
+   {
+      if ($tag->isa('FLV::VideoTag'))
+      {
+         $header->{has_video} = 1;
+      }
+      elsif ($tag->isa('FLV::AudioTag'))
+      {
+         $header->{has_audio} = 1;
+      }
+   }
+
+   return $header;
+}
+
 
 =item $self->parse($fileinst)
 
@@ -75,6 +108,23 @@ sub parse
    }
 
    return;
+}
+
+=item $self->clone()
+
+Create an independent copy of this instance.
+
+=cut
+
+sub clone
+{
+   my $self = shift;
+
+   my $copy = FLV::Header->new;
+   for my $key (qw( has_audio has_video )) {
+      $copy->{$key} = $self->{$key};
+   }
+   return $copy;
 }
 
 =item $self->serialize($filehandle)

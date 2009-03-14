@@ -9,8 +9,9 @@ use English qw(-no_match_vars);
 use base 'FLV::Base';
 
 use FLV::Util;
+use FLV::Tag;
 
-our $VERSION = '0.22';
+our $VERSION = '0.24';
 
 =head1 NAME
 
@@ -64,6 +65,24 @@ sub parse
    $self->{data} = $file->get_bytes($datasize - 1);
 
    return;
+}
+
+=item $self->clone()
+
+Create an independent copy of this instance.
+
+=cut
+
+sub clone
+{
+   my $self = shift;
+
+   my $copy = FLV::AudioTag->new;
+   FLV::Tag->copy_tag($self, $copy);
+   for my $key (qw( format rate size type data )) {
+      $copy->{$key} = $self->{$key};
+   }
+   return $copy;
 }
 
 =item $self->serialize()

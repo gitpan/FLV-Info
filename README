@@ -23,7 +23,7 @@ LEGAL
 LICENSE
     Copyright 2006 Clotho Advanced Media, Inc., <cpan@clotho.com>
 
-    Copyright 2007-2008 Chris Dolan, <cdolan@cpan.org>
+    Copyright 2007-2009 Chris Dolan, <cdolan@cpan.org>
 
     This library is free software; you can redistribute it and/or modify it
     under the same terms as Perl itself.
@@ -88,18 +88,25 @@ COMPATIBILITY
     features that can be released with the FLV::Info test suite, please
     contact me.
 
+    The AVC support comes from an external patch and reading documentation.
+    I have not personally tested this code on any AVC FLV files.
+
 AUTHOR
     Chris Dolan
 
     This module was originally developed by me at Clotho Advanced Media Inc.
     as part of our MediaLandscape project. Now I maintain it in my spare
-    time. I do not anticipate adding new features.
+    time. I do not anticipate adding new features without external input.
+
+ACKNOWLEDGMENTS
+    The FLV::Splice feature was created with financial support from John
+    Drago (CPAN:JOHND). Thanks!
 
 QUALITY
     I care about code quality. The FLV-Info distribution complies with the
     following quality metrics:
 
-    * Perl::Critic v1.093 passes
+    * Perl::Critic v1.098 passes
     * Devel::Cover test coverage almost 90%
     * Pod::Coverage at 100%
     * Test::Spelling passes

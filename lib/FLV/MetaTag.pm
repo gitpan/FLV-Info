@@ -11,8 +11,9 @@ use base 'FLV::Base';
 use FLV::AMFReader;
 use FLV::AMFWriter;
 use FLV::Util;
+use FLV::Tag;
 
-our $VERSION = '0.22';
+our $VERSION = '0.24';
 
 =for stopwords FLVTool2 AMF
 
@@ -57,11 +58,32 @@ sub parse
    my $file     = shift;
    my $datasize = shift;
 
-   my $content = $file->get_bytes($datasize);
-   my @data    = FLV::AMFReader->new($content)->read_flv_meta();
-
-   $self->{data} = \@data;
+   $self->{data} = [ $self->_deserialize($file->get_bytes($datasize)) ];
    return;
+}
+
+sub _deserialize
+{
+   my $self    = shift;
+   my $content = shift;
+
+   return FLV::AMFReader->new($content)->read_flv_meta();
+}
+
+=item $self->clone()
+
+Create an independent copy of this instance.
+
+=cut
+
+sub clone
+{
+   my $self = shift;
+
+   my $copy = FLV::MetaTag->new;
+   FLV::Tag->copy_tag($self, $copy);
+   $copy->{data} = [ $self->_deserialize($self->serialize) ];
+   return $copy;
 }
 
 =item $self->serialize()

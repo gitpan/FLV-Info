@@ -9,8 +9,9 @@ use English qw(-no_match_vars);
 use base 'FLV::Base';
 
 use FLV::Util;
+use FLV::Tag;
 
-our $VERSION = '0.22';
+our $VERSION = '0.24';
 
 =for stopwords codec
 
@@ -74,6 +75,7 @@ sub parse
        : 4 == $self->{codec} ? $self->_parse_on2vp6($pos)
        : 5 == $self->{codec} ? $self->_parse_on2vp6_alpha($pos)
        : 6 == $self->{codec} ? $self->_parse_screen_video($pos)
+       : 7 == $self->{codec} ? $self->_parse_avc($pos)
        :                       die 'Unknown video type';
 
    return;
@@ -175,6 +177,38 @@ sub _parse_on2vp6_alpha
    }
 
    return;
+}
+
+sub _parse_avc
+{
+   my $self = shift;
+   my $pos  = shift;
+
+   my @time;
+   ($self->{avc_packet_type}, $time[0], $time[1], $time[2]) = unpack 'CCCC', $self->{data};
+   $self->{composition_time} = ($time[0] * 256 + $time[1]) * 256 + $time[2];
+
+   return;
+}
+
+=item $self->clone()
+
+Create an independent copy of this instance.
+
+=cut
+
+sub clone
+{
+   my $self = shift;
+
+   my $copy = FLV::VideoTag->new;
+   FLV::Tag->copy_tag($self, $copy);
+   for my $key (qw( codec type width height data avc_packet_type composition_time )) {
+      if (exists $self->{$key}) {
+         $copy->{$key} = $self->{$key};
+      }
+   }
+   return $copy;
 }
 
 =item $self->serialize()

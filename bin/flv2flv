@@ -11,19 +11,23 @@ use English qw(-no_match_vars);
 use FLV::File;
 use FLV::Util;
 
-our $VERSION = '0.22';
+our $VERSION = '0.24';
 
 my %opts = (
-   verbose => 0,
-   help    => 0,
-   version => 0,
+   video_only => 0,
+   audio_only => 0,
+   verbose    => 0,
+   help       => 0,
+   version    => 0,
 );
 
 Getopt::Long::Configure('bundling');
 GetOptions(
-   'v|verbose' => \$opts{verbose},
-   'h|help'    => \$opts{help},
-   'V|version' => \$opts{version},
+   'S|video-only' => \$opts{video_only},
+   'A|audio-only' => \$opts{audio_only},
+   'v|verbose'    => \$opts{verbose},
+   'h|help'       => \$opts{help},
+   'V|version'    => \$opts{version},
 ) or pod2usage(1);
 if ($opts{help})
 {
@@ -45,6 +49,14 @@ my $outfile = shift || q{-};
 
 my $flv = FLV::File->new();
 $flv->parse(q{-} eq $infile ? \*STDIN : $infile);
+
+if ($opts{video_only}) {
+   $flv->get_body->set_tags(grep {!$_->isa('FLV::AudioTag')} $flv->get_body->get_tags);
+}
+if ($opts{audio_only}) {
+   $flv->get_body->set_tags(grep {!$_->isa('FLV::VideoTag')} $flv->get_body->get_tags);
+}
+
 $flv->populate_meta();
 
 my $outfh = FLV::Util->get_write_filehandle($outfile);
@@ -73,6 +85,8 @@ flv2flv - Populate FLV metadata
 flv2flv [options] in.flv out.flv
 
  Options:
+   -S --video-only     Remove the audio track ('S' for silent)
+   -A --audio-only     Remove the video track
    -v --verbose        Print diagnostic messages
    -h --help           Verbose help message
    -V --version        Print version

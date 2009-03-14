@@ -129,7 +129,7 @@ END
 
    # Expect a failure with a warning
    local $SIG{__WARN__} = sub{};
-   ok(!$reader->{file}->serialize($fh), 'serialize with closed filehandle');
+   ok(!$reader->get_file()->serialize($fh), 'serialize with closed filehandle');
 }
 
 for my $sample (@samples)

@@ -12,7 +12,7 @@ use FLV::Body;
 use FLV::MetaTag;
 use FLV::Util;
 
-our $VERSION = '0.22';
+our $VERSION = '0.24';
 
 =for stopwords zeroth
 
@@ -103,6 +103,22 @@ sub parse
    $self->{pos}        = 0;
 
    return;
+}
+
+=item $self->clone()
+
+Create an independent copy of this instance.
+
+=cut
+
+sub clone
+{
+   my $self = shift;
+
+   my $copy = FLV::File->new;
+   $copy->{header} = $self->{header}->clone;
+   $copy->{body} = $self->{body}->clone;
+   return $copy;
 }
 
 =item $self->populate_meta()
@@ -258,14 +274,11 @@ sub serialize
    my $self = shift;
    my $filehandle = shift || croak 'Please specify a filehandle';
 
-   if (!$self->{header})
-   {
-      die 'Missing FLV header';
-   }
    if (!$self->{body})
    {
       die 'Missing FLV body';
    }
+   $self->{header} = FLV::Header->create_from_body($self->{body});
    my $headersize = $self->{header}->serialize($filehandle);
    return if !$headersize;
    return $self->{body}->serialize($filehandle, $headersize);

@@ -3,6 +3,7 @@ bin/flv2mp3
 bin/flv2swf
 bin/flvcut
 bin/flvinfo
+bin/flvsplice
 bin/swf2flv
 Build.PL
 CHANGES
@@ -17,6 +18,7 @@ lib/FLV/FromSWF.pm
 lib/FLV/Header.pm
 lib/FLV/Info.pm
 lib/FLV/MetaTag.pm
+lib/FLV/Splice.pm
 lib/FLV/Tag.pm
 lib/FLV/ToMP3.pm
 lib/FLV/ToSWF.pm
@@ -37,4 +39,5 @@ t/samples/flash6.flv
 t/samples/flash6.swf
 t/samples/flash8.flv
 t/samples/flash8.swf
+t/splice.t
 t/swf.t

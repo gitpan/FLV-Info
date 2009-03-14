@@ -6,7 +6,7 @@ use 5.008;
 use Data::Dumper;
 use List::MoreUtils qw(any);
 
-our $VERSION = '0.22';
+our $VERSION = '0.24';
 
 my $verbose = 0;
 

@@ -1,5 +1,20 @@
 Revision history for Perl module FLV::Info
 
+0.24  13 Mar 2009
+      [ENHANCEMENTS]
+      - Added FLV::Body::set_tags method
+      - FLV::File::serialize now constructs a new header from scratch to avoid inconsistencies.
+      - Added "-S" and "-A" arguments to bin/flv2flv to remove audio and video respectively.
+        Thanks to Michael Sullivan for the idea.
+
+0.23  08 Mar 2009
+      [ENHANCEMENTS]
+      - Added FLV::Splice, financially supported by John Drago (CPAN:JOHND). 'Thanks! ' x 1e6
+      - Added rudimentary support for Speex audio and AVC video codecs.
+        Idea and initial patch from Elif Albuz of Nvidia.
+      [STANDARDS]
+      - Comply with Perl::Critic v1.098
+
 0.22  16 Oct 2008
       [ENHANCEMENTS]
       - Added FLV::Cut and bin/flvcut, which trim FLV content by time

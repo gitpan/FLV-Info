@@ -13,7 +13,7 @@ use FLV::AudioTag;
 use FLV::VideoTag;
 use FLV::MetaTag;
 
-our $VERSION = '0.22';
+our $VERSION = '0.24';
 
 =for stopwords subtag
 
@@ -112,6 +112,22 @@ sub get_payload
 {
    my $self = shift;
    return $self->{payload};
+}
+
+=item $pkg->copy_tag($old_tag, $new_tag)
+
+Perform a generic part of the clone behavior for the tag subtypes.
+
+=cut
+
+sub copy_tag {
+   my $pkg_or_self = shift;
+   my $old_tag     = shift || croak 'Please specify a tag';
+   my $new_tag     = shift || croak 'Please specify a tag';
+   for my $key (qw( start )) {
+      $new_tag->{$key} = $old_tag->{$key};
+   }
+   return;
 }
 
 =item $pkg->serialize($tag, $filehandle)

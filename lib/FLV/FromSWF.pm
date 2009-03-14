@@ -14,7 +14,7 @@ use FLV::VideoTag;
 use English qw(-no_match_vars);
 use Carp;
 
-our $VERSION = '0.22';
+our $VERSION = '0.24';
 
 =for stopwords SWF transcodes
 
@@ -79,8 +79,8 @@ sub parse_swf
    $self->{audiobytes}  = 0;
 
    my $parser = SWF::Parser->new(
-      header_callback => sub { $self->_header(@_); }, ## no critic (Unpacking)
-      tag_callback    => sub { $self->_tag(@_); },    ## no critic (Unpacking)
+      header_callback => sub { $self->_header(@_); },
+      tag_callback    => sub { $self->_tag(@_); },
    );
    $parser->parse_file($infile);
 

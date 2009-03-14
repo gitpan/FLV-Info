@@ -8,7 +8,7 @@ use Data::Dumper;
 
 use FLV::File;
 
-our $VERSION = '0.22';
+our $VERSION = '0.24';
 
 =for stopwords FLVTool2 interframes keyframes FFmpeg SWFs FLVs SWF FLV codec MediaLandscape
 
@@ -42,7 +42,7 @@ L<http://www.adobe.com/devnet/flv/>
 
 Copyright 2006 Clotho Advanced Media, Inc., <cpan@clotho.com>
 
-Copyright 2007-2008 Chris Dolan, <cdolan@cpan.org>
+Copyright 2007-2009 Chris Dolan, <cdolan@cpan.org>
 
 This library is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.
@@ -282,13 +282,23 @@ channels is not yet tested.  If someone has short videos employing
 those features that can be released with the FLV::Info test suite,
 please contact me.
 
+The AVC support comes from an external patch and reading
+documentation.  I have not personally tested this code on any AVC FLV
+files.
+
 =head1 AUTHOR
 
 Chris Dolan
 
 This module was originally developed by me at Clotho Advanced Media
 Inc. as part of our MediaLandscape project.  Now I maintain it in my
-spare time.  I do not anticipate adding new features.
+spare time.  I do not anticipate adding new features without external
+input.
+
+=head1 ACKNOWLEDGMENTS
+
+The FLV::Splice feature was created with financial support from John
+Drago (CPAN:JOHND).  Thanks!
 
 =head1 QUALITY
 
@@ -297,7 +307,7 @@ the following quality metrics:
 
 =over
 
-=item * Perl::Critic v1.093 passes
+=item * Perl::Critic v1.098 passes
 
 =item * Devel::Cover test coverage almost 90%
 
